@@ -1,6 +1,7 @@
 import wx
 
 from lxml import etree, objectify
+from wx.lib.pubsub import pub
 
 
 class XmlTree(wx.TreeCtrl):
@@ -27,24 +28,25 @@ class XmlTree(wx.TreeCtrl):
         for top_level_item in self.xml_root.getchildren():
             child = self.AppendItem(root, top_level_item.tag)
             self.SetItemHasChildren(child)
-            if top_level_item.attrib:
-                self.SetPyData(child, top_level_item.attrib)
+            self.SetPyData(child, top_level_item)
 
         self.Expand(root)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.onItemExpanding)
+        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
 
     def onItemExpanding(self, event):
         item = event.GetItem()
-        book_id = self.GetPyData(item)
+        xml_obj = self.GetPyData(item)
+        book_id = xml_obj.attrib
 
         for top_level_item in self.xml_root.getchildren():
             if top_level_item.attrib == book_id:
                 book = top_level_item
                 self.SetPyData(item, top_level_item)
-                self.add_book_elements(item, book)
+                self.add_elements(item, book)
                 break
 
-    def add_book_elements(self, item, book):
+    def add_elements(self, item, book):
         for element in book.getchildren():
             child = self.AppendItem(item, element.tag)
             if element.getchildren():
@@ -52,6 +54,11 @@ class XmlTree(wx.TreeCtrl):
 
             if element.attrib:
                 self.SetPyData(child, element.attrib)
+
+    def on_tree_selection(self, event):
+        item = event.GetItem()
+        xml_obj = self.GetPyData(item)
+        pub.sendMessage('ui_updater', xml_obj=xml_obj)
 
 
 class TreePanel(wx.Panel):
@@ -76,6 +83,37 @@ class EditorPanel(wx.Panel):
     def __init__(self, parent):
         """Constructor"""
         wx.Panel.__init__(self, parent)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        pub.subscribe(self.update_ui, 'ui_updater')
+
+        self.SetSizer(self.main_sizer)
+
+    def update_ui(self, xml_obj):
+        """
+        Update the panel's user interface based on the data
+        """
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        tag_lbl = wx.StaticText(self, label='Tags')
+        value_lbl = wx.StaticText(self, label='Value')
+        sizer.Add(tag_lbl, 0, wx.ALL, 5)
+        sizer.AddSpacer((55, 0))
+        sizer.Add(value_lbl, 0, wx.ALL, 5)
+        self.main_sizer.Add(sizer)
+
+        if xml_obj:
+            for child in xml_obj.getchildren():
+                sizer = wx.BoxSizer(wx.HORIZONTAL)
+                tag_txt = wx.TextCtrl(self, value=child.tag)
+                sizer.Add(tag_txt, 0, wx.ALL, 5)
+
+                value_txt = wx.TextCtrl(self, value=child.text)
+                sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+
+                self.main_sizer.Add(sizer, 0, wx.EXPAND)
+
+        self.Layout()
+
 
 
 
@@ -84,7 +122,7 @@ class EditorPanel(wx.Panel):
 class MainFrame(wx.Frame):
 
     def __init__(self, xml_path):
-        wx.Frame.__init__(self, parent=None, title='XML Editor')
+        wx.Frame.__init__(self, parent=None, title='XML Editor', size=(800, 600))
 
         splitter = wx.SplitterWindow(self)
 
