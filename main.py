@@ -85,6 +85,7 @@ class EditorPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         pub.subscribe(self.update_ui, 'ui_updater')
+        self.widgets = []
 
         self.SetSizer(self.main_sizer)
 
@@ -93,6 +94,7 @@ class EditorPanel(wx.Panel):
         Update the panel's user interface based on the data
         """
         sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.clear()
 
         tag_lbl = wx.StaticText(self, label='Tags')
         value_lbl = wx.StaticText(self, label='Value')
@@ -101,19 +103,32 @@ class EditorPanel(wx.Panel):
         sizer.Add(value_lbl, 0, wx.ALL, 5)
         self.main_sizer.Add(sizer)
 
+        self.widgets.extend([tag_lbl, value_lbl])
+
         if xml_obj:
             for child in xml_obj.getchildren():
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 tag_txt = wx.TextCtrl(self, value=child.tag)
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
+                self.widgets.append(tag_txt)
 
                 value_txt = wx.TextCtrl(self, value=child.text)
                 sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+                self.widgets.append(value_txt)
 
                 self.main_sizer.Add(sizer, 0, wx.EXPAND)
 
         self.Layout()
 
+    def clear(self):
+        """
+        Clears the panel of widgets
+        """
+        for widget in self.widgets:
+            widget.Destroy()
+
+        self.widgets = []
+        self.Layout()
 
 
 
