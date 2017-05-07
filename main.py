@@ -49,11 +49,9 @@ class XmlTree(wx.TreeCtrl):
     def add_elements(self, item, book):
         for element in book.getchildren():
             child = self.AppendItem(item, element.tag)
+            self.SetPyData(child, element)
             if element.getchildren():
                 self.SetItemHasChildren(child)
-
-            if element.attrib:
-                self.SetPyData(child, element.attrib)
 
     def on_tree_selection(self, event):
         item = event.GetItem()
@@ -117,6 +115,19 @@ class EditorPanel(wx.Panel):
                 self.widgets.append(value_txt)
 
                 self.main_sizer.Add(sizer, 0, wx.EXPAND)
+            else:
+                if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
+                    sizer = wx.BoxSizer(wx.HORIZONTAL)
+                    tag_txt = wx.TextCtrl(self, value=xml_obj.tag)
+                    sizer.Add(tag_txt, 0, wx.ALL, 5)
+                    self.widgets.append(tag_txt)
+
+                    value_txt = wx.TextCtrl(self, value=xml_obj.text)
+                    sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+                    self.widgets.append(value_txt)
+
+                    self.main_sizer.Add(sizer, 0, wx.EXPAND)
+
 
         self.Layout()
 
@@ -129,9 +140,6 @@ class EditorPanel(wx.Panel):
 
         self.widgets = []
         self.Layout()
-
-
-
 
 
 class MainFrame(wx.Frame):
