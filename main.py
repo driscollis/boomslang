@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ET
 import wx
 
 from functools import partial
@@ -12,7 +13,6 @@ class XmlTree(wx.TreeCtrl):
         self.xml_root = parent.xml_root
 
         root = self.AddRoot(self.xml_root.tag)
-        self.SetPyData(root, ('key', 'value'))
 
         for top_level_item in self.xml_root.getchildren():
             child = self.AppendItem(root, top_level_item.tag)
@@ -93,10 +93,10 @@ class EditorPanel(wx.Panel):
         self.widgets.extend([tag_lbl, value_lbl])
 
         if xml_obj:
+            lbl_size = (75, 25)
             for child in xml_obj.getchildren():
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
-                tag_txt = wx.TextCtrl(self, value=child.tag)
-                tag_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child.tag))
+                tag_txt = wx.StaticText(self, label=child.tag, size=lbl_size)
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
                 self.widgets.append(tag_txt)
 
@@ -109,8 +109,7 @@ class EditorPanel(wx.Panel):
             else:
                 if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
                     sizer = wx.BoxSizer(wx.HORIZONTAL)
-                    tag_txt = wx.TextCtrl(self, value=xml_obj.tag)
-                    tag_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj.tag))
+                    tag_txt = wx.StaticText(self, label=xml_obj.tag, size=lbl_size)
                     sizer.Add(tag_txt, 0, wx.ALL, 5)
                     self.widgets.append(tag_txt)
 
@@ -134,9 +133,9 @@ class EditorPanel(wx.Panel):
         self.Layout()
 
     def on_text_change(self, event, xml_obj):
-        print 'Old: ' + xml_obj
-        xml_obj = event.GetString()
-        print 'New: ' + xml_obj
+        print 'Old: ' + xml_obj.text
+        xml_obj.text = event.GetString()
+        print 'New: ' + xml_obj.text
 
 
 class MainFrame(wx.Frame):
@@ -146,8 +145,7 @@ class MainFrame(wx.Frame):
                           size=(800, 600))
 
         try:
-            with open(xml_path) as f:
-                xml = f.read()
+            self.xml_tree = ET.parse(xml_path)
         except IOError:
             print('Bad file')
             return
@@ -156,14 +154,14 @@ class MainFrame(wx.Frame):
             print(e)
             return
 
-        self.xml_root = objectify.fromstring(xml)
+        self.xml_root = self.xml_tree.getroot()
 
         splitter = wx.SplitterWindow(self)
 
         tree_panel = TreePanel(splitter, self.xml_root)
         editor_panel = EditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
-        splitter.SetMinimumPaneSize(20)
+        splitter.SetMinimumPaneSize(400)
         self.create_menu()
 
         self.Show()
@@ -185,15 +183,7 @@ class MainFrame(wx.Frame):
         """
         Save the data
         """
-        objectify.deannotate(self.xml_root)
-        etree.cleanup_namespaces(self.xml_root)
-
-        obj_xml = etree.tostring(self.xml_root,
-                                 pretty_print=True,
-                                 xml_declaration=True)
-
-        with open('test.xml', 'wb') as xml_writer:
-            xml_writer.write(obj_xml)
+        self.xml_tree.write('test.xml')
 
 
 if __name__ == '__main__':
