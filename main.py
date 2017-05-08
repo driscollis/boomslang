@@ -1,5 +1,6 @@
 import wx
 
+from functools import partial
 from lxml import etree, objectify
 from wx.lib.pubsub import pub
 
@@ -8,19 +9,7 @@ class XmlTree(wx.TreeCtrl):
 
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
-
-        try:
-            with open(parent.xml_path) as f:
-                xml = f.read()
-        except IOError:
-            print('Bad file')
-            return
-        except Exception as e:
-            print('Really bad error')
-            print(e)
-            return
-
-        self.xml_root = objectify.fromstring(xml)
+        self.xml_root = parent.xml_root
 
         root = self.AddRoot(self.xml_root.tag)
         self.SetPyData(root, ('key', 'value'))
@@ -62,9 +51,9 @@ class XmlTree(wx.TreeCtrl):
 class TreePanel(wx.Panel):
 
     #----------------------------------------------------------------------
-    def __init__(self, parent, xml_path):
+    def __init__(self, parent, xml_obj):
         wx.Panel.__init__(self, parent)
-        self.xml_path = xml_path
+        self.xml_root = xml_obj
 
         self.tree = XmlTree(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
                             wx.TR_HAS_BUTTONS
@@ -107,10 +96,12 @@ class EditorPanel(wx.Panel):
             for child in xml_obj.getchildren():
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 tag_txt = wx.TextCtrl(self, value=child.tag)
+                tag_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child.tag))
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
                 self.widgets.append(tag_txt)
 
                 value_txt = wx.TextCtrl(self, value=child.text)
+                value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
                 sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
                 self.widgets.append(value_txt)
 
@@ -119,15 +110,16 @@ class EditorPanel(wx.Panel):
                 if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
                     sizer = wx.BoxSizer(wx.HORIZONTAL)
                     tag_txt = wx.TextCtrl(self, value=xml_obj.tag)
+                    tag_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj.tag))
                     sizer.Add(tag_txt, 0, wx.ALL, 5)
                     self.widgets.append(tag_txt)
 
                     value_txt = wx.TextCtrl(self, value=xml_obj.text)
+                    value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj))
                     sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
                     self.widgets.append(value_txt)
 
                     self.main_sizer.Add(sizer, 0, wx.EXPAND)
-
 
         self.Layout()
 
@@ -141,20 +133,67 @@ class EditorPanel(wx.Panel):
         self.widgets = []
         self.Layout()
 
+    def on_text_change(self, event, xml_obj):
+        print 'Old: ' + xml_obj
+        xml_obj = event.GetString()
+        print 'New: ' + xml_obj
+
 
 class MainFrame(wx.Frame):
 
     def __init__(self, xml_path):
-        wx.Frame.__init__(self, parent=None, title='XML Editor', size=(800, 600))
+        wx.Frame.__init__(self, parent=None, title='XML Editor',
+                          size=(800, 600))
+
+        try:
+            with open(xml_path) as f:
+                xml = f.read()
+        except IOError:
+            print('Bad file')
+            return
+        except Exception as e:
+            print('Really bad error')
+            print(e)
+            return
+
+        self.xml_root = objectify.fromstring(xml)
 
         splitter = wx.SplitterWindow(self)
 
-        tree_panel = TreePanel(splitter, xml_path)
+        tree_panel = TreePanel(splitter, self.xml_root)
         editor_panel = EditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
         splitter.SetMinimumPaneSize(20)
+        self.create_menu()
 
         self.Show()
+
+    def create_menu(self):
+        menu_bar = wx.MenuBar()
+        file_menu = wx.Menu()
+        save_menu_item = file_menu.Append(wx.NewId(), 'Save',
+                                          'Save the XML')
+        self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
+
+
+        exitMenuItem = file_menu.Append(wx.NewId(), "Exit",
+                                        "Exit the application")
+        menu_bar.Append(file_menu, "&File")
+        self.SetMenuBar(menu_bar)
+
+    def on_save(self, event):
+        """
+        Save the data
+        """
+        objectify.deannotate(self.xml_root)
+        etree.cleanup_namespaces(self.xml_root)
+
+        obj_xml = etree.tostring(self.xml_root,
+                                 pretty_print=True,
+                                 xml_declaration=True)
+
+        with open('test.xml', 'wb') as xml_writer:
+            xml_writer.write(obj_xml)
 
 
 if __name__ == '__main__':
