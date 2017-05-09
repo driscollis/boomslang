@@ -1,5 +1,7 @@
+import lxml.etree as ET
 import wx
 
+from functools import partial
 from lxml import etree, objectify
 from wx.lib.pubsub import pub
 
@@ -8,22 +10,9 @@ class XmlTree(wx.TreeCtrl):
 
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
-
-        try:
-            with open(parent.xml_path) as f:
-                xml = f.read()
-        except IOError:
-            print('Bad file')
-            return
-        except Exception as e:
-            print('Really bad error')
-            print(e)
-            return
-
-        self.xml_root = objectify.fromstring(xml)
+        self.xml_root = parent.xml_root
 
         root = self.AddRoot(self.xml_root.tag)
-        self.SetPyData(root, ('key', 'value'))
 
         for top_level_item in self.xml_root.getchildren():
             child = self.AppendItem(root, top_level_item.tag)
@@ -31,20 +20,19 @@ class XmlTree(wx.TreeCtrl):
             self.SetPyData(child, top_level_item)
 
         self.Expand(root)
-        self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.onItemExpanding)
+        self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
 
-    def onItemExpanding(self, event):
+    def on_item_expanding(self, event):
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
-        book_id = xml_obj.attrib
 
-        for top_level_item in self.xml_root.getchildren():
-            if top_level_item.attrib == book_id:
-                book = top_level_item
-                self.SetPyData(item, top_level_item)
-                self.add_elements(item, book)
-                break
+        for element in xml_obj.getchildren():
+            child = self.AppendItem(item, element.tag)
+            self.SetPyData(item, element)
+            if element.getchildren():
+                self.SetItemHasChildren(child)
+
 
     def add_elements(self, item, book):
         for element in book.getchildren():
@@ -61,14 +49,13 @@ class XmlTree(wx.TreeCtrl):
 
 class TreePanel(wx.Panel):
 
-    #----------------------------------------------------------------------
-    def __init__(self, parent, xml_path):
+    def __init__(self, parent, xml_obj):
         wx.Panel.__init__(self, parent)
-        self.xml_path = xml_path
+        self.xml_root = xml_obj
 
-        self.tree = XmlTree(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
-                            wx.TR_HAS_BUTTONS
-                            | wx.TR_EDIT_LABELS)
+        self.tree = XmlTree(
+            self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
+            wx.TR_HAS_BUTTONS)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.tree, 0, wx.EXPAND)
@@ -104,13 +91,15 @@ class EditorPanel(wx.Panel):
         self.widgets.extend([tag_lbl, value_lbl])
 
         if xml_obj:
+            lbl_size = (75, 25)
             for child in xml_obj.getchildren():
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
-                tag_txt = wx.TextCtrl(self, value=child.tag)
+                tag_txt = wx.StaticText(self, label=child.tag, size=lbl_size)
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
                 self.widgets.append(tag_txt)
 
                 value_txt = wx.TextCtrl(self, value=child.text)
+                value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
                 sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
                 self.widgets.append(value_txt)
 
@@ -118,16 +107,16 @@ class EditorPanel(wx.Panel):
             else:
                 if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
                     sizer = wx.BoxSizer(wx.HORIZONTAL)
-                    tag_txt = wx.TextCtrl(self, value=xml_obj.tag)
+                    tag_txt = wx.StaticText(self, label=xml_obj.tag, size=lbl_size)
                     sizer.Add(tag_txt, 0, wx.ALL, 5)
                     self.widgets.append(tag_txt)
 
                     value_txt = wx.TextCtrl(self, value=xml_obj.text)
+                    value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj))
                     sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
                     self.widgets.append(value_txt)
 
                     self.main_sizer.Add(sizer, 0, wx.EXPAND)
-
 
         self.Layout()
 
@@ -141,20 +130,58 @@ class EditorPanel(wx.Panel):
         self.widgets = []
         self.Layout()
 
+    def on_text_change(self, event, xml_obj):
+        print 'Old: ' + xml_obj.text
+        xml_obj.text = event.GetString()
+        print 'New: ' + xml_obj.text
+
 
 class MainFrame(wx.Frame):
 
     def __init__(self, xml_path):
-        wx.Frame.__init__(self, parent=None, title='XML Editor', size=(800, 600))
+        wx.Frame.__init__(self, parent=None, title='XML Editor',
+                          size=(800, 600))
+
+        try:
+            self.xml_tree = ET.parse(xml_path)
+        except IOError:
+            print('Bad file')
+            return
+        except Exception as e:
+            print('Really bad error')
+            print(e)
+            return
+
+        self.xml_root = self.xml_tree.getroot()
 
         splitter = wx.SplitterWindow(self)
 
-        tree_panel = TreePanel(splitter, xml_path)
+        tree_panel = TreePanel(splitter, self.xml_root)
         editor_panel = EditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
-        splitter.SetMinimumPaneSize(20)
+        splitter.SetMinimumPaneSize(400)
+        self.create_menu()
 
         self.Show()
+
+    def create_menu(self):
+        menu_bar = wx.MenuBar()
+        file_menu = wx.Menu()
+        save_menu_item = file_menu.Append(wx.NewId(), 'Save',
+                                          'Save the XML')
+        self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
+
+
+        exitMenuItem = file_menu.Append(wx.NewId(), "Exit",
+                                        "Exit the application")
+        menu_bar.Append(file_menu, "&File")
+        self.SetMenuBar(menu_bar)
+
+    def on_save(self, event):
+        """
+        Save the data
+        """
+        self.xml_tree.write('test.xml')
 
 
 if __name__ == '__main__':
