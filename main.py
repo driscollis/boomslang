@@ -2,165 +2,10 @@ import lxml.etree as ET
 import wx
 
 from functools import partial
+
+from boom_tree import BoomTreePanel
+from boom_xml_editor import XmlEditorPanel
 from wx.lib.pubsub import pub
-
-
-class XmlTree(wx.TreeCtrl):
-    """
-    The class that holds all the functionality for the tree control
-    widget
-    """
-
-    def __init__(self, parent, id, pos, size, style):
-        wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
-        self.xml_root = parent.xml_root
-
-        root = self.AddRoot(self.xml_root.tag)
-
-        for top_level_item in self.xml_root.getchildren():
-            child = self.AppendItem(root, top_level_item.tag)
-            self.SetItemHasChildren(child)
-            self.SetPyData(child, top_level_item)
-
-        self.Expand(root)
-        self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
-        self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
-
-    def on_item_expanding(self, event):
-        """
-        A handler that fires when a tree item is being expanded
-
-        This will cause the sub-elements of the tree to be created
-        and added to the tree
-        """
-        item = event.GetItem()
-        xml_obj = self.GetPyData(item)
-
-        for element in xml_obj.getchildren():
-            child = self.AppendItem(item, element.tag)
-            self.SetPyData(item, element)
-            if element.getchildren():
-                self.SetItemHasChildren(child)
-
-    def add_elements(self, item, book):
-        """
-        Add items to the tree control
-        """
-        for element in book.getchildren():
-            child = self.AppendItem(item, element.tag)
-            self.SetPyData(child, element)
-            if element.getchildren():
-                self.SetItemHasChildren(child)
-
-    def on_tree_selection(self, event):
-        """
-        A handler that fires when an item in the tree is selected
-
-        This will cause an update to be sent to the XmlEditorPanel
-        to allow editing of the XML
-        """
-        item = event.GetItem()
-        xml_obj = self.GetPyData(item)
-        pub.sendMessage('ui_updater', xml_obj=xml_obj)
-
-
-class TreePanel(wx.Panel):
-    """
-    The panel class that contains the XML tree control
-    """
-
-    def __init__(self, parent, xml_obj):
-        wx.Panel.__init__(self, parent)
-        self.xml_root = xml_obj
-
-        self.tree = XmlTree(
-            self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
-            wx.TR_HAS_BUTTONS)
-
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.tree, 0, wx.EXPAND)
-        self.SetSizer(sizer)
-
-
-class XmlEditorPanel(wx.Panel):
-    """
-    The panel in the notebook that allows editing of XML element values
-    """
-
-    def __init__(self, parent):
-        """Constructor"""
-        wx.Panel.__init__(self, parent)
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-        pub.subscribe(self.update_ui, 'ui_updater')
-        self.widgets = []
-
-        self.SetSizer(self.main_sizer)
-
-    def update_ui(self, xml_obj):
-        """
-        Update the panel's user interface based on the data
-        """
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.clear()
-
-        tag_lbl = wx.StaticText(self, label='Tags')
-        value_lbl = wx.StaticText(self, label='Value')
-        sizer.Add(tag_lbl, 0, wx.ALL, 5)
-        sizer.AddSpacer((55, 0))
-        sizer.Add(value_lbl, 0, wx.ALL, 5)
-        self.main_sizer.Add(sizer)
-
-        self.widgets.extend([tag_lbl, value_lbl])
-
-        if xml_obj:
-            lbl_size = (75, 25)
-            for child in xml_obj.getchildren():
-                sizer = wx.BoxSizer(wx.HORIZONTAL)
-                tag_txt = wx.StaticText(self, label=child.tag, size=lbl_size)
-                sizer.Add(tag_txt, 0, wx.ALL, 5)
-                self.widgets.append(tag_txt)
-
-                value_txt = wx.TextCtrl(self, value=child.text)
-                value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
-                sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
-                self.widgets.append(value_txt)
-
-                self.main_sizer.Add(sizer, 0, wx.EXPAND)
-            else:
-                if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
-                    sizer = wx.BoxSizer(wx.HORIZONTAL)
-                    tag_txt = wx.StaticText(self, label=xml_obj.tag, size=lbl_size)
-                    sizer.Add(tag_txt, 0, wx.ALL, 5)
-                    self.widgets.append(tag_txt)
-
-                    value_txt = wx.TextCtrl(self, value=xml_obj.text)
-                    value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj))
-                    sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
-                    self.widgets.append(value_txt)
-
-                    self.main_sizer.Add(sizer, 0, wx.EXPAND)
-
-        self.Layout()
-
-    def clear(self):
-        """
-        Clears the widgets from the panel in preparation for an update
-        """
-        for widget in self.widgets:
-            widget.Destroy()
-
-        self.widgets = []
-        self.Layout()
-
-    def on_text_change(self, event, xml_obj):
-        """
-        An event handler that is called when the text changes in the text
-        control. This will update the passed in xml object to something
-        new
-        """
-        print 'Old: ' + xml_obj.text
-        xml_obj.text = event.GetString()
-        print 'New: ' + xml_obj.text
 
 
 class Boomslang(wx.Frame):
@@ -183,7 +28,7 @@ class Boomslang(wx.Frame):
 
         splitter = wx.SplitterWindow(self)
 
-        tree_panel = TreePanel(splitter, self.xml_root)
+        tree_panel = BoomTreePanel(splitter, self.xml_root)
         editor_panel = XmlEditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
         splitter.SetMinimumPaneSize(400)
@@ -209,7 +54,7 @@ class Boomslang(wx.Frame):
 
     def on_save(self, event):
         """
-        Save the data
+        Event handler that saves the data to disk
         """
         self.xml_tree.write('test.xml')
 
