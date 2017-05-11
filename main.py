@@ -1,11 +1,9 @@
 import lxml.etree as ET
 import wx
 
-from functools import partial
 
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
-from wx.lib.pubsub import pub
 
 
 class Boomslang(wx.Frame):
@@ -26,15 +24,19 @@ class Boomslang(wx.Frame):
 
         self.xml_root = self.xml_tree.getroot()
 
+        self.create_main_ui()
+        self.create_menu()
+
+        self.Show()
+
+    def create_main_ui(self):
         splitter = wx.SplitterWindow(self)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
         editor_panel = XmlEditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
         splitter.SetMinimumPaneSize(400)
-        self.create_menu()
 
-        self.Show()
 
     def create_menu(self):
         """
