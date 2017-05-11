@@ -2,11 +2,14 @@ import lxml.etree as ET
 import wx
 
 from functools import partial
-from lxml import etree, objectify
 from wx.lib.pubsub import pub
 
 
 class XmlTree(wx.TreeCtrl):
+    """
+    The class that holds all the functionality for the tree control
+    widget
+    """
 
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
@@ -24,6 +27,12 @@ class XmlTree(wx.TreeCtrl):
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
 
     def on_item_expanding(self, event):
+        """
+        A handler that fires when a tree item is being expanded
+
+        This will cause the sub-elements of the tree to be created
+        and added to the tree
+        """
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
 
@@ -33,8 +42,10 @@ class XmlTree(wx.TreeCtrl):
             if element.getchildren():
                 self.SetItemHasChildren(child)
 
-
     def add_elements(self, item, book):
+        """
+        Add items to the tree control
+        """
         for element in book.getchildren():
             child = self.AppendItem(item, element.tag)
             self.SetPyData(child, element)
@@ -42,12 +53,21 @@ class XmlTree(wx.TreeCtrl):
                 self.SetItemHasChildren(child)
 
     def on_tree_selection(self, event):
+        """
+        A handler that fires when an item in the tree is selected
+
+        This will cause an update to be sent to the XmlEditorPanel
+        to allow editing of the XML
+        """
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
         pub.sendMessage('ui_updater', xml_obj=xml_obj)
 
 
 class TreePanel(wx.Panel):
+    """
+    The panel class that contains the XML tree control
+    """
 
     def __init__(self, parent, xml_obj):
         wx.Panel.__init__(self, parent)
@@ -62,8 +82,10 @@ class TreePanel(wx.Panel):
         self.SetSizer(sizer)
 
 
-class EditorPanel(wx.Panel):
-    """"""
+class XmlEditorPanel(wx.Panel):
+    """
+    The panel in the notebook that allows editing of XML element values
+    """
 
     def __init__(self, parent):
         """Constructor"""
@@ -122,7 +144,7 @@ class EditorPanel(wx.Panel):
 
     def clear(self):
         """
-        Clears the panel of widgets
+        Clears the widgets from the panel in preparation for an update
         """
         for widget in self.widgets:
             widget.Destroy()
@@ -131,12 +153,17 @@ class EditorPanel(wx.Panel):
         self.Layout()
 
     def on_text_change(self, event, xml_obj):
+        """
+        An event handler that is called when the text changes in the text
+        control. This will update the passed in xml object to something
+        new
+        """
         print 'Old: ' + xml_obj.text
         xml_obj.text = event.GetString()
         print 'New: ' + xml_obj.text
 
 
-class MainFrame(wx.Frame):
+class Boomslang(wx.Frame):
 
     def __init__(self, xml_path):
         wx.Frame.__init__(self, parent=None, title='XML Editor',
@@ -157,7 +184,7 @@ class MainFrame(wx.Frame):
         splitter = wx.SplitterWindow(self)
 
         tree_panel = TreePanel(splitter, self.xml_root)
-        editor_panel = EditorPanel(splitter)
+        editor_panel = XmlEditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
         splitter.SetMinimumPaneSize(400)
         self.create_menu()
@@ -165,6 +192,9 @@ class MainFrame(wx.Frame):
         self.Show()
 
     def create_menu(self):
+        """
+        Creates the menu bar and menu items for the main frame
+        """
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
         save_menu_item = file_menu.Append(wx.NewId(), 'Save',
@@ -187,5 +217,5 @@ class MainFrame(wx.Frame):
 if __name__ == '__main__':
     xml_path = 'books.xml'
     app = wx.App(redirect=False)
-    frame = MainFrame(xml_path)
+    frame = Boomslang(xml_path)
     app.MainLoop()
