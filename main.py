@@ -1,15 +1,19 @@
+import controller
 import lxml.etree as ET
 import wx
 
+from functools import partial
 
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
+from wx.lib.pubsub import pub
 
 
 class Boomslang(wx.Frame):
 
     def __init__(self, xml_path):
-        wx.Frame.__init__(self, parent=None, title='XML Editor',
+        size = (800, 600)
+        wx.Frame.__init__(self, parent=None, title='Boomslang XML',
                           size=(800, 600))
 
         try:
@@ -24,19 +28,15 @@ class Boomslang(wx.Frame):
 
         self.xml_root = self.xml_tree.getroot()
 
-        self.create_main_ui()
-        self.create_menu()
-
-        self.Show()
-
-    def create_main_ui(self):
         splitter = wx.SplitterWindow(self)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
         editor_panel = XmlEditorPanel(splitter)
         splitter.SplitVertically(tree_panel, editor_panel)
-        splitter.SetMinimumPaneSize(400)
+        splitter.SetMinimumPaneSize(size[0] / 2)
+        self.create_menu()
 
+        self.Show()
 
     def create_menu(self):
         """
@@ -58,7 +58,16 @@ class Boomslang(wx.Frame):
         """
         Event handler that saves the data to disk
         """
-        self.xml_tree.write('test.xml')
+        path = controller.save_xml_file(self)
+        if path:
+            if '.xml' not in path:
+                path += '.xml'
+
+            # Update the current directory to the save location
+            self.current_directory = os.path.dirname(path)
+
+            # Save the xml
+            self.xml_tree.write(path)
 
 
 if __name__ == '__main__':

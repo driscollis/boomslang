@@ -12,7 +12,6 @@ class XmlTree(wx.TreeCtrl):
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
         self.xml_root = parent.xml_root
-        self.expanded= {}
 
         root = self.AddRoot(self.xml_root.tag)
 
@@ -45,14 +44,11 @@ class XmlTree(wx.TreeCtrl):
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
 
-        if id(xml_obj) not in self.expanded and xml_obj:
-            for top_level_item in xml_obj.getchildren():
-                child = self.AppendItem(item, top_level_item.tag)
-                self.SetPyData(child, top_level_item)
-                if top_level_item.getchildren():
-                    self.SetItemHasChildren(child)
-
-        self.expanded[id(xml_obj)] = ''
+        for element in xml_obj.getchildren():
+            child = self.AppendItem(item, element.tag)
+            self.SetPyData(item, element)
+            if element.getchildren():
+                self.SetItemHasChildren(child)
 
     def on_tree_selection(self, event):
         """
@@ -64,16 +60,6 @@ class XmlTree(wx.TreeCtrl):
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
         pub.sendMessage('ui_updater', xml=xml_obj)
-
-    def update_tree(self, xml_obj):
-        """
-        Update the tree with the new data
-        """
-        selection = self.GetSelection()
-        selection_xml_obj = self.GetPyData(selection)
-        if id(selection_xml_obj) in self.expanded:
-            child = self.AppendItem(selection, xml_obj.tag)
-            self.SetPyData(child, xml_obj)
 
 
 class BoomTreePanel(wx.Panel):
@@ -90,5 +76,5 @@ class BoomTreePanel(wx.Panel):
             wx.TR_HAS_BUTTONS)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.tree, 0, wx.EXPAND)
+        sizer.Add(self.tree, 1, wx.EXPAND)
         self.SetSizer(sizer)
