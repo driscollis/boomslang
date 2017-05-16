@@ -48,14 +48,15 @@ class Boomslang(wx.Frame):
         """
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
-        save_menu_item = file_menu.Append(wx.NewId(), 'Save',
-                                          'Save the XML')
+
+        save_menu_item = file_menu.Append(
+            wx.NewId(), 'Save', '')
         self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
 
-
-        exitMenuItem = file_menu.Append(wx.NewId(), "Exit",
-                                        "Exit the application")
+        exitMenuItem = file_menu.Append(
+            wx.NewId(), 'Quit', '')
         menu_bar.Append(file_menu, "&File")
+
         self.SetMenuBar(menu_bar)
 
     def on_save(self, event):

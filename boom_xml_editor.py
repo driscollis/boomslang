@@ -1,17 +1,19 @@
 import wx
+import wx.lib.scrolledpanel as scrolled
 
 from functools import partial
 from wx.lib.pubsub import pub
 
 
-class XmlEditorPanel(wx.Panel):
+class XmlEditorPanel(scrolled.ScrolledPanel):
     """
     The panel in the notebook that allows editing of XML element values
     """
 
     def __init__(self, parent):
         """Constructor"""
-        wx.Panel.__init__(self, parent)
+        scrolled.ScrolledPanel.__init__(
+            self, parent, style=wx.SUNKEN_BORDER)
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         pub.subscribe(self.update_ui, 'ui_updater')
         self.widgets = []
@@ -34,9 +36,11 @@ class XmlEditorPanel(wx.Panel):
 
         self.widgets.extend([tag_lbl, value_lbl])
 
-        if xml_obj:
+        if xml_obj is not None:
             lbl_size = (75, 25)
             for child in xml_obj.getchildren():
+                if child.getchildren():
+                    continue
                 sizer = wx.BoxSizer(wx.HORIZONTAL)
                 tag_txt = wx.StaticText(self, label=child.tag, size=lbl_size)
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
@@ -55,7 +59,8 @@ class XmlEditorPanel(wx.Panel):
                     if xml_obj.getchildren() == []:
                         self.add_single_tag_elements(xml_obj, lbl_size)
 
-        self.Layout()
+            self.SetAutoLayout(1)
+            self.SetupScrolling()
 
     def add_single_tag_elements(self, xml_obj, lbl_size):
         """
