@@ -11,6 +11,7 @@ class XmlTree(wx.TreeCtrl):
 
     def __init__(self, parent, id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
+        self.expanded= {}
         self.xml_root = parent.xml_root
 
         root = self.AddRoot(self.xml_root.tag)
@@ -44,11 +45,14 @@ class XmlTree(wx.TreeCtrl):
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
 
-        for element in xml_obj.getchildren():
-            child = self.AppendItem(item, element.tag)
-            self.SetPyData(item, element)
-            if element.getchildren():
-                self.SetItemHasChildren(child)
+        if id(xml_obj) not in self.expanded and xml_obj:
+            for top_level_item in xml_obj.getchildren():
+                child = self.AppendItem(item, top_level_item.tag)
+                self.SetPyData(child, top_level_item)
+                if top_level_item.getchildren():
+                    self.SetItemHasChildren(child)
+
+        self.expanded[id(xml_obj)] = ''
 
     def on_tree_selection(self, event):
         """
