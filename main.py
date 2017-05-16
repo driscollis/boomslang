@@ -31,8 +31,12 @@ class Boomslang(wx.Frame):
         splitter = wx.SplitterWindow(self)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
-        editor_panel = XmlEditorPanel(splitter)
-        splitter.SplitVertically(tree_panel, editor_panel)
+
+        xml_editor_notebook = wx.Notebook(splitter)
+        xml_editor_panel = XmlEditorPanel(xml_editor_notebook)
+        xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
+
+        splitter.SplitVertically(tree_panel, xml_editor_notebook)
         splitter.SetMinimumPaneSize(size[0] / 2)
         self.create_menu()
 

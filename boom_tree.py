@@ -59,7 +59,7 @@ class XmlTree(wx.TreeCtrl):
         """
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
-        pub.sendMessage('ui_updater', xml=xml_obj)
+        pub.sendMessage('ui_updater', xml_obj=xml_obj)
 
 
 class BoomTreePanel(wx.Panel):
