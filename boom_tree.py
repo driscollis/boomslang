@@ -15,6 +15,8 @@ class XmlTree(wx.TreeCtrl):
         self.xml_root = parent.xml_root
 
         root = self.AddRoot(self.xml_root.tag)
+        self.SetPyData(root, self.xml_root)
+        wx.CallAfter(pub.sendMessage, 'ui_updater', xml_obj=self.xml_root)
 
         for top_level_item in self.xml_root.getchildren():
             child = self.AppendItem(root, top_level_item.tag)

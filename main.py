@@ -39,6 +39,7 @@ class Boomslang(wx.Frame):
         splitter.SplitVertically(tree_panel, xml_editor_notebook)
         splitter.SetMinimumPaneSize(size[0] / 2)
         self.create_menu()
+        self.create_tool_bar()
 
         self.Show()
 
@@ -58,6 +59,24 @@ class Boomslang(wx.Frame):
         menu_bar.Append(file_menu, "&File")
 
         self.SetMenuBar(menu_bar)
+
+    def create_tool_bar(self):
+        self.toolbar = self.CreateToolBar()
+        self.toolbar.SetToolBitmapSize((16,16))
+
+        #open_ico = wx.ArtProvider.GetBitmap(
+            #wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
+        #openTool = self.toolbar.AddSimpleTool(
+            #wx.ID_ANY, open_ico, "Open", "Open an XML File")
+        #self.Bind(wx.EVT_MENU, self.on_open, openTool)
+
+        save_ico = wx.ArtProvider.GetBitmap(
+            wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16,16))
+        saveTool = self.toolbar.AddSimpleTool(
+            wx.ID_ANY, save_ico, "Save", "Saves the XML")
+        self.Bind(wx.EVT_MENU, self.on_save, saveTool)
+
+        self.toolbar.Realize()
 
     def on_save(self, event):
         """
