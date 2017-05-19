@@ -12,7 +12,7 @@ from wx.lib.pubsub import pub
 
 class Boomslang(wx.Frame):
 
-    def __init__(self, xml_obj):
+    def __init__(self):
         self.size = (800, 600)
         wx.Frame.__init__(self, parent=None, title='Boomslang XML',
                           size=(800, 600))
@@ -117,5 +117,5 @@ class Boomslang(wx.Frame):
 if __name__ == '__main__':
     xml_path = 'books.xml'
     app = wx.App(redirect=False)
-    frame = Boomslang(xml_path)
+    frame = Boomslang()
     app.MainLoop()
