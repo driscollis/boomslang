@@ -1,5 +1,6 @@
 import controller
 import lxml.etree as ET
+import os
 import wx
 
 from functools import partial
@@ -11,23 +12,23 @@ from wx.lib.pubsub import pub
 
 class Boomslang(wx.Frame):
 
-    def __init__(self, xml_path):
-        size = (800, 600)
+    def __init__(self, xml_obj):
+        self.size = (800, 600)
         wx.Frame.__init__(self, parent=None, title='Boomslang XML',
                           size=(800, 600))
 
-        try:
-            self.xml_tree = ET.parse(xml_path)
-        except IOError:
-            print('Bad file')
-            return
-        except Exception as e:
-            print('Really bad error')
-            print(e)
-            return
+        self.xml_root = None
+        self.current_directory = os.path.expanduser('~')
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel = wx.Panel(self)
+        self.panel.SetSizer(self.main_sizer)
 
-        self.xml_root = self.xml_tree.getroot()
+        self.create_menu()
+        self.create_tool_bar()
 
+        self.Show()
+
+    def create_display(self):
         splitter = wx.SplitterWindow(self)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
@@ -37,11 +38,9 @@ class Boomslang(wx.Frame):
         xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
 
         splitter.SplitVertically(tree_panel, xml_editor_notebook)
-        splitter.SetMinimumPaneSize(size[0] / 2)
-        self.create_menu()
-        self.create_tool_bar()
-
-        self.Show()
+        splitter.SetMinimumPaneSize(self.size[0] / 2)
+        self.main_sizer.Add(splitter, 1, wx.ALL|wx.EXPAND, 5)
+        self.panel.Layout()
 
     def create_menu(self):
         """
@@ -64,11 +63,11 @@ class Boomslang(wx.Frame):
         self.toolbar = self.CreateToolBar()
         self.toolbar.SetToolBitmapSize((16,16))
 
-        #open_ico = wx.ArtProvider.GetBitmap(
-            #wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
-        #openTool = self.toolbar.AddSimpleTool(
-            #wx.ID_ANY, open_ico, "Open", "Open an XML File")
-        #self.Bind(wx.EVT_MENU, self.on_open, openTool)
+        open_ico = wx.ArtProvider.GetBitmap(
+            wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
+        openTool = self.toolbar.AddSimpleTool(
+            wx.ID_ANY, open_ico, "Open", "Open an XML File")
+        self.Bind(wx.EVT_MENU, self.on_open, openTool)
 
         save_ico = wx.ArtProvider.GetBitmap(
             wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16,16))
@@ -78,11 +77,32 @@ class Boomslang(wx.Frame):
 
         self.toolbar.Realize()
 
+    def parse_xml(self, xml_path):
+        self.current_directory = os.path.dirname(xml_path)
+        try:
+            self.xml_tree = ET.parse(xml_path)
+        except IOError:
+            print('Bad file')
+            return
+        except Exception as e:
+            print('Really bad error')
+            print(e)
+            return
+
+        self.xml_root = self.xml_tree.getroot()
+
+    def on_open(self, event):
+        xml_path = controller.open_file(self)
+
+        if xml_path:
+            self.parse_xml(xml_path)
+            self.create_display()
+
     def on_save(self, event):
         """
         Event handler that saves the data to disk
         """
-        path = controller.save_xml_file(self)
+        path = controller.save_file(self)
         if path:
             if '.xml' not in path:
                 path += '.xml'
