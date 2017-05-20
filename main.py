@@ -3,8 +3,6 @@ import lxml.etree as ET
 import os
 import wx
 
-from functools import partial
-
 from boom_attribute_ed import AttributeEditorPanel
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel

@@ -1,3 +1,4 @@
+import controller
 import lxml.etree as ET
 import wx
 
@@ -24,7 +25,8 @@ class NodeDialog(wx.Dialog):
         lbl_sizer.Add(value_lbl, 0, wx.ALL, 5)
 
         self.tag_txt = wx.TextCtrl(self, value='')
-        self.value_txt  = wx.TextCtrl(self)
+        self.value_txt  = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        self.value_txt.Bind(wx.EVT_KEY_DOWN, self.on_enter)
         tag_sizer.Add(self.tag_txt, 0, wx.ALL, 5)
         tag_sizer.Add(self.value_txt, 0, wx.ALL, 5)
 
@@ -43,6 +45,16 @@ class NodeDialog(wx.Dialog):
         self.SetSizer(main_sizer)
 
         self.ShowModal()
+
+    def on_enter(self, event):
+        """
+        Event handler that fires when a key is pressed in the
+        attribute value text control
+        """
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
+            self.on_save(event=None)
+        event.Skip()
 
     def on_cancel(self, event):
         """
