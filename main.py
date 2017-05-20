@@ -68,15 +68,15 @@ class Boomslang(wx.Frame):
 
         open_ico = wx.ArtProvider.GetBitmap(
             wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
-        openTool = self.toolbar.AddSimpleTool(
+        open_tool = self.toolbar.AddSimpleTool(
             wx.ID_ANY, open_ico, "Open", "Open an XML File")
-        self.Bind(wx.EVT_MENU, self.on_open, openTool)
+        self.Bind(wx.EVT_MENU, self.on_open, open_tool)
 
         save_ico = wx.ArtProvider.GetBitmap(
             wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16,16))
-        saveTool = self.toolbar.AddSimpleTool(
+        save_tool = self.toolbar.AddSimpleTool(
             wx.ID_ANY, save_ico, "Save", "Saves the XML")
-        self.Bind(wx.EVT_MENU, self.on_save, saveTool)
+        self.Bind(wx.EVT_MENU, self.on_save, save_tool)
 
         self.toolbar.AddSeparator()
 
@@ -84,6 +84,7 @@ class Boomslang(wx.Frame):
             wx.ART_PLUS, wx.ART_TOOLBAR, (16,16))
         add_tool = self.toolbar.AddSimpleTool(
             wx.ID_ANY, add_ico, "Add Node", "Adds an XML Node")
+        self.Bind(wx.EVT_MENU, self.on_add_node, add_tool)
 
 
         self.toolbar.Realize()
@@ -104,6 +105,9 @@ class Boomslang(wx.Frame):
             return
 
         self.xml_root = self.xml_tree.getroot()
+
+    def on_add_node(self, event):
+        pub.sendMessage('add_node')
 
     def on_open(self, event):
         """

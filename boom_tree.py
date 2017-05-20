@@ -1,5 +1,6 @@
 import wx
 
+from add_node_dialog import NodeDialog
 from wx.lib.pubsub import pub
 
 
@@ -76,6 +77,7 @@ class BoomTreePanel(wx.Panel):
     def __init__(self, parent, xml_obj):
         wx.Panel.__init__(self, parent)
         self.xml_root = xml_obj
+        pub.subscribe(self.add_node, 'add_node')
 
         self.tree = XmlTree(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
@@ -84,3 +86,8 @@ class BoomTreePanel(wx.Panel):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.tree, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+    def add_node(self):
+        node = self.tree.GetSelection()
+        data = self.tree.GetPyData(node)
+        dlg = NodeDialog(data)
