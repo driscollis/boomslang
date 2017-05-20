@@ -22,7 +22,8 @@ class AttributeDialog(wx.Dialog):
 
         self.attr_text = wx.TextCtrl(self)
         attr_sizer.Add(self.attr_text, 1, wx.ALL, 5)
-        self.value_text = wx.TextCtrl(self)
+        self.value_text = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
+        self.value_text.Bind(wx.EVT_KEY_DOWN, self.on_enter)
         attr_sizer.Add(self.value_text, 1, wx.ALL, 5)
 
         save_btn = wx.Button(self, label='Save')
@@ -39,6 +40,16 @@ class AttributeDialog(wx.Dialog):
         self.SetSizer(main_sizer)
 
         self.ShowModal()
+
+    def on_enter(self, event):
+        """
+        Event handler that fires when a key is pressed in the
+        attribute value text control
+        """
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_RETURN or keycode == wx.WXK_NUMPAD_ENTER:
+            self.on_save(event=None)
+        event.Skip()
 
     def on_cancel(self, event):
         """
@@ -60,7 +71,11 @@ class AttributeDialog(wx.Dialog):
         """
         attr = self.attr_text.GetValue()
         value = self.value_text.GetValue()
-        if attr or value:
+        if attr:
             self.xml_obj.attrib[attr] = value
             pub.sendMessage('ui_updater', xml_obj=self.xml_obj)
+        else:
+            # TODO - Show a dialog telling the user that there is no attr to save
+            raise NotImplemented
+
         self.Close()
