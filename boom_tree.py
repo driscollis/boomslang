@@ -49,7 +49,7 @@ class XmlTree(wx.TreeCtrl):
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
 
-        if id(xml_obj) not in self.expanded and xml_obj:
+        if id(xml_obj) not in self.expanded and xml_obj is not None:
             for top_level_item in xml_obj.getchildren():
                 child = self.AppendItem(item, top_level_item.tag)
                 self.SetPyData(child, top_level_item)
@@ -89,6 +89,7 @@ class BoomTreePanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.xml_root = xml_obj
         pub.subscribe(self.add_node, 'add_node')
+        pub.subscribe(self.remove_node, 'remove_node')
 
         self.tree = XmlTree(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
@@ -99,7 +100,32 @@ class BoomTreePanel(wx.Panel):
         self.SetSizer(sizer)
 
     def add_node(self):
+        """
+        Add a sub-node to the selected item in the tree
+        """
         node = self.tree.GetSelection()
         data = self.tree.GetPyData(node)
         dlg = NodeDialog(data)
         dlg.Destroy()
+
+    def remove_node(self):
+        """
+        Remove the selected node from the tree
+        """
+        node = self.tree.GetSelection()
+        xml_node = self.tree.GetPyData(node)
+
+        if node:
+            msg = 'Are you sure you want to delete the {node} node'
+            dlg = wx.MessageDialog(
+                parent=None,
+                message=msg.format(node=xml_node.tag),
+                caption='Warning',
+                style=wx.YES_NO|wx.YES_DEFAULT|wx.ICON_EXCLAMATION
+            )
+            if dlg.ShowModal() == wx.ID_YES:
+                parent = xml_node.getparent()
+                parent.remove(xml_node)
+                self.tree.DeleteChildren(node)
+                self.tree.Delete(node)
+            dlg.Destroy()

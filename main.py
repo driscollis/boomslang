@@ -80,11 +80,19 @@ class Boomslang(wx.Frame):
 
         self.toolbar.AddSeparator()
 
+        # Create the add node toolbar button
         add_ico = wx.ArtProvider.GetBitmap(
             wx.ART_PLUS, wx.ART_TOOLBAR, (16,16))
         add_tool = self.toolbar.AddSimpleTool(
             wx.ID_ANY, add_ico, "Add Node", "Adds an XML Node")
         self.Bind(wx.EVT_MENU, self.on_add_node, add_tool)
+
+        # Create the delete node button
+        remove_ico = wx.ArtProvider.GetBitmap(
+            wx.ART_MINUS, wx.ART_TOOLBAR, (16,16))
+        remove_node_tool = self.toolbar.AddSimpleTool(
+            wx.ID_ANY, remove_ico, "Remove Node", "Removes the XML Node")
+        self.Bind(wx.EVT_MENU, self.on_remove_node, remove_node_tool)
 
 
         self.toolbar.Realize()
@@ -107,7 +115,17 @@ class Boomslang(wx.Frame):
         self.xml_root = self.xml_tree.getroot()
 
     def on_add_node(self, event):
+        """
+        Event handler that is fired when an XML node is added to the
+        selected node
+        """
         pub.sendMessage('add_node')
+
+    def on_remove_node(self, event):
+        """
+        Event handler that is fired when an XML node is removed
+        """
+        pub.sendMessage('remove_node')
 
     def on_open(self, event):
         """
@@ -134,7 +152,8 @@ class Boomslang(wx.Frame):
             # Save the xml
             self.xml_tree.write(path)
 
-
+# ------------------------------------------------------------------------------
+# Run the program!
 if __name__ == '__main__':
     xml_path = 'books.xml'
     app = wx.App(redirect=False)
