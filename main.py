@@ -5,6 +5,7 @@ import wx
 
 from functools import partial
 
+from boom_attribute_ed import AttributeEditorPanel
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
 from wx.lib.pubsub import pub
@@ -36,6 +37,9 @@ class Boomslang(wx.Frame):
         xml_editor_notebook = wx.Notebook(splitter)
         xml_editor_panel = XmlEditorPanel(xml_editor_notebook)
         xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
+
+        attribute_panel = AttributeEditorPanel(xml_editor_notebook)
+        xml_editor_notebook.AddPage(attribute_panel, 'Attributes')
 
         splitter.SplitVertically(tree_panel, xml_editor_notebook)
         splitter.SetMinimumPaneSize(self.size[0] / 2)

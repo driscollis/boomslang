@@ -17,7 +17,7 @@ class State():
         self.val_widget = val_widget
 
 
-class BoomAttributeEditorPanel(wx.Panel):
+class AttributeEditorPanel(wx.Panel):
     """
     A class that holds all UI elements for editing
     XML attribute elements
@@ -89,6 +89,7 @@ class BoomAttributeEditorPanel(wx.Panel):
         Event handler to add an attribute
         """
         dlg = AttributeDialog(self.xml_obj)
+        dlg.Destroy()
 
     def clear(self):
         """

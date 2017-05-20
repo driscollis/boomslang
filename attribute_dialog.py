@@ -47,7 +47,7 @@ class AttributeDialog(wx.Dialog):
 
         Will destroy the dialog
         """
-        self.Destroy()
+        self.Close()
 
     def on_save(self, event):
         """
@@ -63,4 +63,4 @@ class AttributeDialog(wx.Dialog):
         if attr or value:
             self.xml_obj.attrib[attr] = value
             pub.sendMessage('ui_updater', xml_obj=self.xml_obj)
-        self.Destroy()
+        self.Close()
