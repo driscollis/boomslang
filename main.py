@@ -60,6 +60,9 @@ class Boomslang(wx.Frame):
         self.SetMenuBar(menu_bar)
 
     def create_tool_bar(self):
+        """
+        Creates the toolbar in the main application
+        """
         self.toolbar = self.CreateToolBar()
         self.toolbar.SetToolBitmapSize((16,16))
 
@@ -75,9 +78,20 @@ class Boomslang(wx.Frame):
             wx.ID_ANY, save_ico, "Save", "Saves the XML")
         self.Bind(wx.EVT_MENU, self.on_save, saveTool)
 
+        self.toolbar.AddSeparator()
+
+        add_ico = wx.ArtProvider.GetBitmap(
+            wx.ART_PLUS, wx.ART_TOOLBAR, (16,16))
+        add_tool = self.toolbar.AddSimpleTool(
+            wx.ID_ANY, add_ico, "Add Node", "Adds an XML Node")
+
+
         self.toolbar.Realize()
 
     def parse_xml(self, xml_path):
+        """
+        Parses the XML from the file that is passed in
+        """
         self.current_directory = os.path.dirname(xml_path)
         try:
             self.xml_tree = ET.parse(xml_path)
@@ -92,6 +106,9 @@ class Boomslang(wx.Frame):
         self.xml_root = self.xml_tree.getroot()
 
     def on_open(self, event):
+        """
+        Event handler that is called when you need to open an XML file
+        """
         xml_path = controller.open_file(self)
 
         if xml_path:
