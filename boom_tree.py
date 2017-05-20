@@ -94,10 +94,43 @@ class BoomTreePanel(wx.Panel):
         self.tree = XmlTree(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
             wx.TR_HAS_BUTTONS)
+        self.tree.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.tree, 1, wx.EXPAND)
         self.SetSizer(sizer)
+
+    def on_context_menu(self, event):
+        """
+        Event handler that creates a context menu on right-click
+        of a tree control's item
+        """
+        if not hasattr(self, "add_node_id"):
+            self.add_node_id = wx.NewId()
+            self.remove_node_id = wx.NewId()
+
+            self.Bind(wx.EVT_MENU, self.on_add_remove_node,
+                      id=self.add_node_id)
+            self.Bind(wx.EVT_MENU, self.on_add_remove_node,
+                      id=self.remove_node_id)
+
+        # Build the context menu
+        menu = wx.Menu()
+        add_node_menu_item = menu.Append(self.add_node_id, 'Add Node')
+        remove_node_menu_item = menu.Append(self.remove_node_id, 'Remove Node')
+
+        self.PopupMenu(menu)
+        menu.Destroy()
+
+    def on_add_remove_node(self, event):
+        """
+        Event handler for adding or removing nodes
+        """
+        evt_id = event.GetId()
+        if evt_id == self.add_node_id:
+            self.add_node()
+        elif evt_id == self.remove_node_id:
+            self.remove_node()
 
     def add_node(self):
         """
