@@ -14,6 +14,7 @@ class XmlTree(wx.TreeCtrl):
         wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
         self.expanded= {}
         self.xml_root = parent.xml_root
+        pub.subscribe(self.update_tree, 'tree_update')
 
         root = self.AddRoot(self.xml_root.tag)
         self.SetPyData(root, self.xml_root)
@@ -68,6 +69,16 @@ class XmlTree(wx.TreeCtrl):
         xml_obj = self.GetPyData(item)
         pub.sendMessage('ui_updater', xml_obj=xml_obj)
 
+    def update_tree(self, xml_obj):
+        """
+        Update the tree with the new data
+        """
+        selection = self.GetSelection()
+        selection_xml_obj = self.GetPyData(selection)
+
+        child = self.AppendItem(selection, xml_obj.tag)
+        self.SetPyData(child, xml_obj)
+
 
 class BoomTreePanel(wx.Panel):
     """
@@ -91,3 +102,4 @@ class BoomTreePanel(wx.Panel):
         node = self.tree.GetSelection()
         data = self.tree.GetPyData(node)
         dlg = NodeDialog(data)
+        dlg.Destroy()

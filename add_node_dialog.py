@@ -17,19 +17,13 @@ class NodeDialog(wx.Dialog):
 
         lbl_size = (95, 20)
 
-        if xml_obj and xml_obj.tag == 'Model_List':
-            self.SetTitle('New Model')
-            tag_lbl = wx.StaticText(self, label='Model Tag', size=lbl_size)
-            value_lbl = wx.StaticText(self, label='Model Value')
-            self.tag_txt = wx.TextCtrl(self, value='Model')
-        else:
-            tag_lbl = wx.StaticText(self, label='Element Tag', size=lbl_size)
-            value_lbl = wx.StaticText(self, label='Element Value')
-            self.tag_txt = wx.TextCtrl(self, value='')
+        tag_lbl = wx.StaticText(self, label='Element Tag', size=lbl_size)
+        value_lbl = wx.StaticText(self, label='Element Value')
 
         lbl_sizer.Add(tag_lbl, 0, wx.ALL, 5)
         lbl_sizer.Add(value_lbl, 0, wx.ALL, 5)
 
+        self.tag_txt = wx.TextCtrl(self, value='')
         self.value_txt  = wx.TextCtrl(self)
         tag_sizer.Add(self.tag_txt, 0, wx.ALL, 5)
         tag_sizer.Add(self.value_txt, 0, wx.ALL, 5)
@@ -57,7 +51,7 @@ class NodeDialog(wx.Dialog):
 
         Will destroy the dialog
         """
-        self.Destroy()
+        self.Close()
 
     def on_save(self, event):
         """
@@ -72,4 +66,10 @@ class NodeDialog(wx.Dialog):
             self.xml_obj, self.tag_txt.GetValue())
         element.text = self.value_txt.GetValue()
         pub.sendMessage('tree_update', xml_obj=element)
-        self.Destroy()
+        self.Close()
+
+if __name__ == '__main__':
+    app = wx.App(False)
+    dlg = NodeDialog('')
+    dlg.Destroy()
+    app.MainLoop()
