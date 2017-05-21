@@ -19,7 +19,9 @@ class Boomslang(wx.Frame):
                           size=(800, 600))
 
         self.xml_root = None
-        self.full_tmp_path = None
+        self.full_tmp_path = ''
+        self.full_saved_path = ''
+        self.changed = False
 
         self.current_directory = os.path.expanduser('~')
         app_location = os.path.dirname(os.path.abspath( __file__ ))
@@ -145,21 +147,28 @@ class Boomslang(wx.Frame):
         """
         print('Autosaving to {} @ {}'.format(self.full_tmp_path, time.ctime()))
         self.xml_tree.write(self.full_tmp_path)
+        self.changed = True
 
-    def save(self):
+    def save(self, location=None):
         """
         Save the XML to disk
         """
-        path = controller.save_file(self)
+        if not location:
+            path = controller.save_file(self)
+        else:
+            path = location
+
         if path:
             if '.xml' not in path:
                 path += '.xml'
 
             # Update the current directory to the save location
             self.current_directory = os.path.dirname(path)
+            self.full_saved_path = path
 
             # Save the xml
             self.xml_tree.write(path)
+            self.changed = False
 
     def on_about_box(self, event):
         """
@@ -221,10 +230,35 @@ class Boomslang(wx.Frame):
         """
         self.save()
 
+    def warn_not_saved(self):
+        """
+        Shows a dialog to warn the user that they need to save their changes
+        """
+        msg = 'Do you want to save your changes?'
+        dlg = wx.MessageDialog(
+            parent=None,
+            message=msg,
+            caption='Warning',
+            style=wx.YES_NO|wx.YES_DEFAULT|wx.ICON_EXCLAMATION
+        )
+        if dlg.ShowModal() == wx.ID_YES:
+            self.save(location=self.full_saved_path)
+
+        dlg.Destroy()
+
+
     def on_exit(self, event):
         """
         Event handler that closes the application
         """
+        if self.full_saved_path and self.full_tmp_path and self.changed:
+            # verify that the draft file is actually different from the
+            # in-memory version via md5 hash
+            current = controller.is_save_current(self.full_saved_path,
+                                                 self.full_tmp_path)
+            if not current:
+                self.warn_not_saved()
+
         if self.auto_save_timer.IsRunning():
             self.auto_save_timer.Stop()
         if os.path.exists(self.full_tmp_path):
