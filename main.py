@@ -7,6 +7,7 @@ from boom_attribute_ed import AttributeEditorPanel
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
 from wx.lib.pubsub import pub
+from wx.lib.wordwrap import wordwrap
 
 
 class Boomslang(wx.Frame):
@@ -50,14 +51,23 @@ class Boomslang(wx.Frame):
         """
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
+        help_menu = wx.Menu()
 
+        # add menu items to the file menu
         save_menu_item = file_menu.Append(
             wx.NewId(), 'Save', '')
         self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
 
-        exitMenuItem = file_menu.Append(
+        exit_menu_item = file_menu.Append(
             wx.NewId(), 'Quit', '')
+        self.Bind(wx.EVT_MENU, self.on_exit, exit_menu_item)
         menu_bar.Append(file_menu, "&File")
+
+        # add menu items to the help menu
+        about_menu_item = help_menu.Append(
+            wx.NewId(), 'About')
+        self.Bind(wx.EVT_MENU, self.on_about_box, about_menu_item)
+        menu_bar.Append(help_menu, '&Help')
 
         self.SetMenuBar(menu_bar)
 
@@ -96,7 +106,6 @@ class Boomslang(wx.Frame):
             wx.ID_ANY, remove_ico, "Remove Node", "Removes the XML Node")
         self.Bind(wx.EVT_MENU, self.on_remove_node, remove_node_tool)
 
-
         self.toolbar.Realize()
 
     def parse_xml(self, xml_path):
@@ -115,6 +124,25 @@ class Boomslang(wx.Frame):
             return
 
         self.xml_root = self.xml_tree.getroot()
+
+    def on_about_box(self, event):
+        """
+        Event handler that builds and shows an about box
+        """
+        info = wx.AboutDialogInfo()
+        info.Name = "About Boomslang"
+        info.Version = "0.1 Beta"
+        info.Copyright = "(C) 2017 Mike Driscoll"
+        info.Description = wordwrap(
+            "Boomslang is a Python-based XML editor ",
+            350, wx.ClientDC(self.panel))
+        info.WebSite = ("https://github.com/driscollis/boomslang",
+                        "Boomslang on Github")
+        info.Developers = ["Mike Driscoll"]
+        info.License = wordwrap("wxWindows Library Licence", 500,
+                                wx.ClientDC(self.panel))
+        # Show the wx.AboutBox
+        wx.AboutBox(info)
 
     def on_add_node(self, event):
         """
@@ -153,6 +181,12 @@ class Boomslang(wx.Frame):
 
             # Save the xml
             self.xml_tree.write(path)
+
+    def on_exit(self, event):
+        """
+        Event handler that closes the application
+        """
+        self.Close()
 
 # ------------------------------------------------------------------------------
 # Run the program!
