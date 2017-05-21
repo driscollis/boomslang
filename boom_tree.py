@@ -138,7 +138,11 @@ class BoomTreePanel(wx.Panel):
         """
         node = self.tree.GetSelection()
         data = self.tree.GetPyData(node)
-        dlg = NodeDialog(data)
+        dlg = NodeDialog(data,
+                         title = 'New Node',
+                         label_one = 'Element Tag',
+                         label_two = 'Element Value'
+                         )
         dlg.Destroy()
 
     def remove_node(self):

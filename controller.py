@@ -67,6 +67,3 @@ def is_save_current(saved_file_path, tmp_file_path):
     tmp_md5 = get_md5(tmp_file_path)
 
     return saved_md5 == tmp_md5
-
-
-

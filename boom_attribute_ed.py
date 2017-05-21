@@ -88,7 +88,12 @@ class AttributeEditorPanel(wx.Panel):
         """
         Event handler to add an attribute
         """
-        dlg = AttributeDialog(self.xml_obj)
+        dlg = AttributeDialog(
+            self.xml_obj,
+            title = 'Add Attribute',
+            label_one = 'Attribute',
+            label_two = 'Value'
+        )
         dlg.Destroy()
 
     def clear(self):

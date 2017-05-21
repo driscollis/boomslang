@@ -246,7 +246,6 @@ class Boomslang(wx.Frame):
 
         dlg.Destroy()
 
-
     def on_exit(self, event):
         """
         Event handler that closes the application
