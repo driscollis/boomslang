@@ -18,6 +18,7 @@ class Boomslang(wx.Frame):
                           size=(800, 600))
 
         self.xml_root = None
+        pub.subscribe(self.save, 'save')
         self.current_directory = os.path.expanduser('~')
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
@@ -125,6 +126,21 @@ class Boomslang(wx.Frame):
 
         self.xml_root = self.xml_tree.getroot()
 
+    def save(self):
+        """
+        Save the XML to disk
+        """
+        path = controller.save_file(self)
+        if path:
+            if '.xml' not in path:
+                path += '.xml'
+
+            # Update the current directory to the save location
+            self.current_directory = os.path.dirname(path)
+
+            # Save the xml
+            self.xml_tree.write(path)
+
     def on_about_box(self, event):
         """
         Event handler that builds and shows an about box
@@ -171,16 +187,7 @@ class Boomslang(wx.Frame):
         """
         Event handler that saves the data to disk
         """
-        path = controller.save_file(self)
-        if path:
-            if '.xml' not in path:
-                path += '.xml'
-
-            # Update the current directory to the save location
-            self.current_directory = os.path.dirname(path)
-
-            # Save the xml
-            self.xml_tree.write(path)
+        self.save()
 
     def on_exit(self, event):
         """
