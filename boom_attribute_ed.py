@@ -113,6 +113,7 @@ class AttributeEditorPanel(wx.Panel):
             self.xml_obj.attrib[new_key] = state.val_widget.GetValue()
             state.previous_key = state.current_key
             state.current_key = new_key
+            pub.sendMessage('on_change', event=None)
 
     def on_val_change(self, event, attr):
         """
@@ -121,3 +122,4 @@ class AttributeEditorPanel(wx.Panel):
         """
         new_val = event.GetString()
         self.xml_obj.attrib[attr.GetValue()] = new_val
+        pub.sendMessage('on_change', event=None)

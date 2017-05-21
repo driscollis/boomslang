@@ -1,6 +1,7 @@
 import controller
 import lxml.etree as ET
 import os
+import time
 import wx
 
 from boom_attribute_ed import AttributeEditorPanel
@@ -18,14 +19,25 @@ class Boomslang(wx.Frame):
                           size=(800, 600))
 
         self.xml_root = None
-        pub.subscribe(self.save, 'save')
+        self.full_tmp_path = None
+
         self.current_directory = os.path.expanduser('~')
+        app_location = os.path.dirname(os.path.abspath( __file__ ))
+        self.tmp_location = os.path.join(app_location, 'drafts')
+
+        pub.subscribe(self.save, 'save')
+        pub.subscribe(self.auto_save, 'on_change')
+
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
         self.panel.SetSizer(self.main_sizer)
 
         self.create_menu()
         self.create_tool_bar()
+
+        self.auto_save_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.auto_save, self.auto_save_timer)
+        self.Bind(wx.EVT_CLOSE, self.on_exit)
 
         self.Show()
 
@@ -126,6 +138,14 @@ class Boomslang(wx.Frame):
 
         self.xml_root = self.xml_tree.getroot()
 
+    def auto_save(self, event):
+        """
+        Event handler that is called via timer or pubsub to save the
+        current version of the XML to disk in a temporary location
+        """
+        print('Autosaving to {} @ {}'.format(self.full_tmp_path, time.ctime()))
+        self.xml_tree.write(self.full_tmp_path)
+
     def save(self):
         """
         Save the XML to disk
@@ -178,10 +198,22 @@ class Boomslang(wx.Frame):
         Event handler that is called when you need to open an XML file
         """
         xml_path = controller.open_file(self)
+        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
+        self.full_tmp_path = os.path.join(
+            self.tmp_location,
+            current_time + '-' + os.path.basename(xml_path))
+        if not os.path.exists(self.tmp_location):
+            try:
+                os.makedirs(self.tmp_location)
+            except IOError:
+                raise IOError('Unable to create file at {}'.format(
+                    self.tmp_location))
 
         if xml_path:
             self.parse_xml(xml_path)
             self.create_display()
+            # Run the timer every 30 seconds
+            self.auto_save_timer.Start(30000)
 
     def on_save(self, event):
         """
@@ -193,7 +225,15 @@ class Boomslang(wx.Frame):
         """
         Event handler that closes the application
         """
-        self.Close()
+        if self.auto_save_timer.IsRunning():
+            self.auto_save_timer.Stop()
+        if os.path.exists(self.full_tmp_path):
+            try:
+                os.remove(self.full_tmp_path)
+            except IOError:
+                print('Unable to delete file: {}'.format(self.full_tmp_path))
+
+        self.Destroy()
 
 # ------------------------------------------------------------------------------
 # Run the program!

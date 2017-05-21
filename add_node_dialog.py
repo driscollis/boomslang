@@ -78,6 +78,7 @@ class NodeDialog(wx.Dialog):
             self.xml_obj, self.tag_txt.GetValue())
         element.text = self.value_txt.GetValue()
         pub.sendMessage('tree_update', xml_obj=element)
+        pub.sendMessage('on_change', event=None)
         self.Close()
 
 if __name__ == '__main__':

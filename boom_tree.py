@@ -161,4 +161,5 @@ class BoomTreePanel(wx.Panel):
                 parent.remove(xml_node)
                 self.tree.DeleteChildren(node)
                 self.tree.Delete(node)
+                pub.sendMessage('on_change', event=None)
             dlg.Destroy()

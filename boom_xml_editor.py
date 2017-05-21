@@ -99,3 +99,4 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         new
         """
         xml_obj.text = event.GetString()
+        pub.sendMessage('on_change', event=None)

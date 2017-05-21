@@ -74,6 +74,7 @@ class AttributeDialog(wx.Dialog):
         if attr:
             self.xml_obj.attrib[attr] = value
             pub.sendMessage('ui_updater', xml_obj=self.xml_obj)
+            pub.sendMessage('on_change', event=None)
         else:
             # TODO - Show a dialog telling the user that there is no attr to save
             raise NotImplemented
