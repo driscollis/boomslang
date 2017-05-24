@@ -10,13 +10,14 @@ class XmlTree(wx.TreeCtrl):
     widget
     """
 
-    def __init__(self, parent, id, pos, size, style):
-        wx.TreeCtrl.__init__(self, parent, id, pos, size, style)
+    def __init__(self, parent, wx_id, pos, size, style):
+        wx.TreeCtrl.__init__(self, parent, wx_id, pos, size, style)
         self.expanded= {}
         self.xml_root = parent.xml_root
         pub.subscribe(self.update_tree, 'tree_update')
 
         root = self.AddRoot(self.xml_root.tag)
+        self.expanded[id(self.xml_root)] = ''
         self.SetPyData(root, self.xml_root)
         wx.CallAfter(pub.sendMessage, 'ui_updater', xml_obj=self.xml_root)
 
@@ -24,6 +25,7 @@ class XmlTree(wx.TreeCtrl):
             child = self.AppendItem(root, top_level_item.tag)
             self.SetItemHasChildren(child)
             self.SetPyData(child, top_level_item)
+            self.expanded[id(top_level_item)] = ''
 
         self.Expand(root)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
@@ -74,10 +76,14 @@ class XmlTree(wx.TreeCtrl):
         Update the tree with the new data
         """
         selection = self.GetSelection()
-        selection_xml_obj = self.GetPyData(selection)
+        tree_xml_obj = self.GetPyData(selection)
 
-        child = self.AppendItem(selection, xml_obj.tag)
-        self.SetPyData(child, xml_obj)
+        if id(tree_xml_obj) in self.expanded:
+            child = self.AppendItem(selection, xml_obj.tag)
+            self.SetPyData(child, xml_obj)
+
+        if tree_xml_obj.getchildren():
+            self.SetItemHasChildren(selection)
 
 
 class BoomTreePanel(wx.Panel):
