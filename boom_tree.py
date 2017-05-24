@@ -76,13 +76,13 @@ class XmlTree(wx.TreeCtrl):
         Update the tree with the new data
         """
         selection = self.GetSelection()
-        tree_xml_obj = self.GetPyData(selection)
+        selected_tree_xml_obj = self.GetPyData(selection)
 
-        if id(tree_xml_obj) in self.expanded:
+        if id(selected_tree_xml_obj) in self.expanded:
             child = self.AppendItem(selection, xml_obj.tag)
             self.SetPyData(child, xml_obj)
 
-        if tree_xml_obj.getchildren():
+        if selected_tree_xml_obj.getchildren():
             self.SetItemHasChildren(selection)
 
 
