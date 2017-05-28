@@ -21,16 +21,17 @@ class XmlTree(wx.TreeCtrl):
         self.SetPyData(root, self.xml_root)
         wx.CallAfter(pub.sendMessage, 'ui_updater', xml_obj=self.xml_root)
 
-        for top_level_item in self.xml_root.getchildren():
-            child = self.AppendItem(root, top_level_item.tag)
-            self.SetItemHasChildren(child)
-            self.SetPyData(child, top_level_item)
-            self.expanded[id(top_level_item)] = ''
+        if self.xml_root.getchildren():
+            for top_level_item in self.xml_root.getchildren():
+                child = self.AppendItem(root, top_level_item.tag)
+                if top_level_item.getchildren(): 
+                    self.SetItemHasChildren(child)
+                self.SetPyData(child, top_level_item)
 
         self.Expand(root)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
-
+        
     def add_elements(self, item, book):
         """
         Add items to the tree control

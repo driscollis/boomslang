@@ -1,4 +1,3 @@
-import controller
 import lxml.etree as ET
 import wx
 

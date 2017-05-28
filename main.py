@@ -1,7 +1,7 @@
-import controller
 import lxml.etree as ET
 import os
 import time
+import utils
 import wx
 
 from boom_attribute_ed import AttributeEditorPanel
@@ -44,7 +44,7 @@ class Boomslang(wx.Frame):
         self.Show()
 
     def create_display(self):
-        splitter = wx.SplitterWindow(self)
+        splitter = wx.SplitterWindow(self.panel)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
 
@@ -154,7 +154,7 @@ class Boomslang(wx.Frame):
         Save the XML to disk
         """
         if not location:
-            path = controller.save_file(self)
+            path = utils.save_file(self)
         else:
             path = location
 
@@ -206,7 +206,7 @@ class Boomslang(wx.Frame):
         """
         Event handler that is called when you need to open an XML file
         """
-        xml_path = controller.open_file(self)
+        xml_path = utils.open_file(self)
         current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
         self.full_tmp_path = os.path.join(
             self.tmp_location,
@@ -253,7 +253,7 @@ class Boomslang(wx.Frame):
         if self.full_saved_path and self.full_tmp_path and self.changed:
             # verify that the draft file is actually different from the
             # in-memory version via md5 hash
-            current = controller.is_save_current(self.full_saved_path,
+            current = utils.is_save_current(self.full_saved_path,
                                                  self.full_tmp_path)
             if not current:
                 self.warn_not_saved()
