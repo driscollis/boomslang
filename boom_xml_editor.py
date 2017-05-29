@@ -59,6 +59,11 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
                     if xml_obj.getchildren() == []:
                         self.add_single_tag_elements(xml_obj, lbl_size)
 
+                add_node_btn = wx.Button(self, label='Add Node')
+                add_node_btn.Bind(wx.EVT_BUTTON, self.on_add_node)
+                self.main_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
+                self.widgets.append(add_node_btn)
+
             self.SetAutoLayout(1)
             self.SetupScrolling()
 
@@ -100,3 +105,9 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         """
         xml_obj.text = event.GetString()
         pub.sendMessage('on_change', event=None)
+
+    def on_add_node(self, event):
+        """
+        Event handler that adds an XML node using pubsub
+        """
+        pub.sendMessage('add_node')
