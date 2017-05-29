@@ -34,8 +34,7 @@ class Boomslang(wx.Frame):
         self.panel = wx.Panel(self)
         self.panel.SetSizer(self.main_sizer)
 
-        self.create_menu()
-        self.create_tool_bar()
+        self.create_menu_and_toolbar()
 
         self.auto_save_timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.auto_save, self.auto_save_timer)
@@ -44,6 +43,10 @@ class Boomslang(wx.Frame):
         self.Show()
 
     def create_display(self):
+        """
+        Create the tree and xml editing widgets when the user loads
+        an XML file
+        """
         splitter = wx.SplitterWindow(self.panel)
 
         tree_panel = BoomTreePanel(splitter, self.xml_root)
@@ -60,15 +63,20 @@ class Boomslang(wx.Frame):
         self.main_sizer.Add(splitter, 1, wx.ALL|wx.EXPAND, 5)
         self.panel.Layout()
 
-    def create_menu(self):
+    def create_menu_and_toolbar(self):
         """
-        Creates the menu bar and menu items for the main frame
+        Creates the menu bar, menu items, toolbar and accelerator table
+        for the main frame
         """
         menu_bar = wx.MenuBar()
         file_menu = wx.Menu()
         help_menu = wx.Menu()
 
         # add menu items to the file menu
+        open_menu_item = file_menu.Append(
+            wx.NewId(), 'Open', '')
+        self.Bind(wx.EVT_MENU, self.on_open, open_menu_item)
+
         save_menu_item = file_menu.Append(
             wx.NewId(), 'Save', '')
         self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
@@ -86,10 +94,8 @@ class Boomslang(wx.Frame):
 
         self.SetMenuBar(menu_bar)
 
-    def create_tool_bar(self):
-        """
-        Creates the toolbar in the main application
-        """
+        # ----------------------------------------------------------------------
+        # Create toolbar
         self.toolbar = self.CreateToolBar()
         self.toolbar.SetToolBitmapSize((16,16))
 
@@ -123,6 +129,20 @@ class Boomslang(wx.Frame):
 
         self.toolbar.Realize()
 
+        # ----------------------------------------------------------------------
+        # Create an accelerator table
+        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL,  ord('O'),
+                                          open_menu_item.GetId() ),
+                                         (wx.ACCEL_CTRL, ord('S'),
+                                          save_menu_item.GetId() ),
+                                         (wx.ACCEL_CTRL, ord('A'),
+                                          add_tool.GetId() ),
+                                         (wx.ACCEL_CTRL, ord('X'),
+                                          remove_node_tool.GetId())
+                                         ])
+
+        self.SetAcceleratorTable(accel_tbl)
+
     def parse_xml(self, xml_path):
         """
         Parses the XML from the file that is passed in
@@ -153,6 +173,10 @@ class Boomslang(wx.Frame):
         """
         Save the XML to disk
         """
+        if self.xml_root is None:
+            utils.warn_nothing_to_save()
+            return
+
         if not location:
             path = utils.save_file(self)
         else:
@@ -207,18 +231,19 @@ class Boomslang(wx.Frame):
         Event handler that is called when you need to open an XML file
         """
         xml_path = utils.open_file(self)
-        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
-        self.full_tmp_path = os.path.join(
-            self.tmp_location,
-            current_time + '-' + os.path.basename(xml_path))
-        if not os.path.exists(self.tmp_location):
-            try:
-                os.makedirs(self.tmp_location)
-            except IOError:
-                raise IOError('Unable to create file at {}'.format(
-                    self.tmp_location))
 
         if xml_path:
+            current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
+            self.full_tmp_path = os.path.join(
+                self.tmp_location,
+                current_time + '-' + os.path.basename(xml_path))
+            if not os.path.exists(self.tmp_location):
+                try:
+                    os.makedirs(self.tmp_location)
+                except IOError:
+                    raise IOError('Unable to create file at {}'.format(
+                        self.tmp_location))
+
             self.parse_xml(xml_path)
             self.create_display()
             # Run the timer every 30 seconds
@@ -230,22 +255,6 @@ class Boomslang(wx.Frame):
         """
         self.save()
 
-    def warn_not_saved(self):
-        """
-        Shows a dialog to warn the user that they need to save their changes
-        """
-        msg = 'Do you want to save your changes?'
-        dlg = wx.MessageDialog(
-            parent=None,
-            message=msg,
-            caption='Warning',
-            style=wx.YES_NO|wx.YES_DEFAULT|wx.ICON_EXCLAMATION
-        )
-        if dlg.ShowModal() == wx.ID_YES:
-            self.save(location=self.full_saved_path)
-
-        dlg.Destroy()
-
     def on_exit(self, event):
         """
         Event handler that closes the application
@@ -256,7 +265,7 @@ class Boomslang(wx.Frame):
             current = utils.is_save_current(self.full_saved_path,
                                                  self.full_tmp_path)
             if not current:
-                self.warn_not_saved()
+                utils.warn_not_saved()
 
         if self.auto_save_timer.IsRunning():
             self.auto_save_timer.Stop()

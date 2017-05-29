@@ -16,6 +16,7 @@ def open_file(self, default_dir=os.path.expanduser('~')):
     A utility function for opening a file dialog to allow the user
     to open an XML file of their choice
     """
+    path = None
     dlg = wx.FileDialog(
         self, message="Choose a file",
         defaultDir=default_dir,
@@ -28,7 +29,8 @@ def open_file(self, default_dir=os.path.expanduser('~')):
 
     dlg.Destroy()
 
-    return path
+    if path:
+        return path
 
 def save_file(self):
     """
@@ -45,7 +47,9 @@ def save_file(self):
     if dlg.ShowModal() == wx.ID_OK:
         path = dlg.GetPath()
     dlg.Destroy()
-    return path
+
+    if path:
+        return path
 
 def get_md5(path):
     """
@@ -69,3 +73,35 @@ def is_save_current(saved_file_path, tmp_file_path):
     tmp_md5 = get_md5(tmp_file_path)
 
     return saved_md5 == tmp_md5
+
+
+def warn_not_saved():
+    """
+    Shows a dialog to warn the user that they need to save their changes
+    """
+    msg = 'Do you want to save your changes?'
+    dlg = wx.MessageDialog(
+        parent=None,
+        message=msg,
+        caption='Warning',
+        style=wx.YES_NO|wx.YES_DEFAULT|wx.ICON_EXCLAMATION
+    )
+    if dlg.ShowModal() == wx.ID_YES:
+        self.save(location=self.full_saved_path)
+
+    dlg.Destroy()
+
+
+def warn_nothing_to_save():
+    """
+    Warns the user that there is nothing to save
+    """
+    msg = "No Files Open! Nothing to save."
+    dlg = wx.MessageDialog(
+        parent=None,
+        message=msg,
+        caption='Warning',
+        style=wx.OK|wx.ICON_EXCLAMATION
+    )
+    dlg.ShowModal()
+    dlg.Destroy()
