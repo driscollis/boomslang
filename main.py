@@ -94,7 +94,7 @@ class Boomslang(wx.Frame):
 
         self.SetMenuBar(menu_bar)
 
-        # ----------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         # Create toolbar
         self.toolbar = self.CreateToolBar()
         self.toolbar.SetToolBitmapSize((16,16))
@@ -129,7 +129,7 @@ class Boomslang(wx.Frame):
 
         self.toolbar.Realize()
 
-        # ----------------------------------------------------------------------
+        #-----------------------------------------------------------------------
         # Create an accelerator table
         accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL,  ord('O'),
                                           open_menu_item.GetId() ),
@@ -142,6 +142,13 @@ class Boomslang(wx.Frame):
                                          ])
 
         self.SetAcceleratorTable(accel_tbl)
+
+        #-----------------------------------------------------------------------
+        # Create status bar
+        self.status_bar = self.CreateStatusBar(1, wx.ST_SIZEGRIP)
+
+        msg = 'Welcome to Boomslang XML (c) Michael Driscoll - 2017'
+        self.status_bar.SetStatusText(msg)
 
     def parse_xml(self, xml_path):
         """
@@ -166,6 +173,10 @@ class Boomslang(wx.Frame):
         current version of the XML to disk in a temporary location
         """
         print('Autosaving to {} @ {}'.format(self.full_tmp_path, time.ctime()))
+        msg = 'Autosaved at {}'.format(time.strftime('%H:%M:%S',
+                                                     time.localtime()))
+        self.status_bar.SetStatusText(msg)
+
         self.xml_tree.write(self.full_tmp_path)
         self.changed = True
 
@@ -193,6 +204,9 @@ class Boomslang(wx.Frame):
             # Save the xml
             self.xml_tree.write(path)
             self.changed = False
+            msg = 'Last saved at {}'.format(time.strftime('%H:%M:%S',
+                                                          time.localtime()))
+            self.status_bar.SetStatusText(msg)
 
     def on_about_box(self, event):
         """
