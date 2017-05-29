@@ -24,8 +24,10 @@ class Boomslang(wx.Frame):
         self.changed = False
 
         self.current_directory = os.path.expanduser('~')
-        app_location = os.path.dirname(os.path.abspath( __file__ ))
-        self.tmp_location = os.path.join(app_location, 'drafts')
+        self.app_location = os.path.dirname(os.path.abspath( __file__ ))
+        self.tmp_location = os.path.join(self.app_location, 'drafts')
+        self.recent_files_path = os.path.join(
+            self.app_location, 'recent_files.txt')
 
         pub.subscribe(self.save, 'save')
         pub.subscribe(self.auto_save, 'on_change')
@@ -76,6 +78,9 @@ class Boomslang(wx.Frame):
         open_menu_item = file_menu.Append(
             wx.NewId(), 'Open', '')
         self.Bind(wx.EVT_MENU, self.on_open, open_menu_item)
+
+        sub_menu = self.create_recent_items()
+        file_menu.AppendMenu(wx.NewId(), 'Recent', sub_menu)
 
         save_menu_item = file_menu.Append(
             wx.NewId(), 'Save', '')
@@ -150,6 +155,26 @@ class Boomslang(wx.Frame):
         msg = 'Welcome to Boomslang XML (c) Michael Driscoll - 2017'
         self.status_bar.SetStatusText(msg)
 
+    def create_recent_items(self):
+        """
+        Create the recent items sub_menu and return it
+        """
+        self.recent_dict = {}
+        if os.path.exists(self.recent_files_path):
+            submenu = wx.Menu()
+            try:
+                with open(self.recent_files_path) as fobj:
+                    for line in fobj:
+                        menu_id = wx.NewId()
+                        submenu.Append(menu_id, line)
+                        self.recent_dict[menu_id] = line.strip()
+                        self.Bind(wx.EVT_MENU,
+                                  self.on_open_recent_file,
+                                  id=menu_id)
+                return submenu
+            except:
+                pass
+
     def parse_xml(self, xml_path):
         """
         Parses the XML from the file that is passed in
@@ -179,6 +204,27 @@ class Boomslang(wx.Frame):
 
         self.xml_tree.write(self.full_tmp_path)
         self.changed = True
+
+    def open_xml_file(self, xml_path):
+        """
+        Open the specified XML file and load it in the application
+        """
+        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
+        self.full_tmp_path = os.path.join(
+            self.tmp_location,
+            current_time + '-' + os.path.basename(xml_path))
+
+        if not os.path.exists(self.tmp_location):
+            try:
+                os.makedirs(self.tmp_location)
+            except IOError:
+                raise IOError('Unable to create file at {}'.format(
+                    self.tmp_location))
+
+        self.parse_xml(xml_path)
+        self.create_display()
+        # Run the timer every 30 seconds
+        self.auto_save_timer.Start(30000)
 
     def save(self, location=None):
         """
@@ -247,21 +293,54 @@ class Boomslang(wx.Frame):
         xml_path = utils.open_file(self)
 
         if xml_path:
-            current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
-            self.full_tmp_path = os.path.join(
-                self.tmp_location,
-                current_time + '-' + os.path.basename(xml_path))
-            if not os.path.exists(self.tmp_location):
-                try:
-                    os.makedirs(self.tmp_location)
-                except IOError:
-                    raise IOError('Unable to create file at {}'.format(
-                        self.tmp_location))
+            self.open_xml_file(xml_path)
+            self.update_recent_files(xml_path)
 
-            self.parse_xml(xml_path)
-            self.create_display()
-            # Run the timer every 30 seconds
-            self.auto_save_timer.Start(30000)
+    def update_recent_files(self, xml_path):
+        """
+        Update the recent files file
+        """
+        lines = []
+        try:
+            with open(self.recent_files_path) as fobj:
+                lines = fobj.readlines()
+        except:
+            pass
+
+        lines = [line.strip() for line in lines]
+
+        if xml_path not in lines:
+            try:
+                with open(self.recent_files_path, 'a') as fobj:
+                    fobj.write(xml_path)
+                    fobj.write('\n')
+            except:
+                pass
+        elif xml_path != lines[0]:
+            for index, item in enumerate(lines):
+                if xml_path == item:
+                    lines.pop(index)
+                    break
+            lines.insert(0, xml_path)
+
+        if len(lines) > 10:
+            lines = lines[0:9]
+
+            # rewrite the file
+            try:
+                with open(self.recent_files_path, 'w') as fobj:
+                    for line in lines:
+                        fobj.write(line)
+                        fobj.write('\n')
+            except:
+                pass
+
+    def on_open_recent_file(self, event):
+        """
+        Event handler that is called when a recent file is selected
+        for opening
+        """
+        self.open_xml_file(self.recent_dict[event.GetId()])
 
     def on_save(self, event):
         """
