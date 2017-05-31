@@ -159,12 +159,16 @@ class BoomTreePanel(wx.Panel):
         self.copied_data = self.tree.GetPyData(node)
         
     def on_paste(self, event):
-        node = self.tree.GetSelection()
-        parent_xml_node = self.tree.GetPyData(node)
-            
-        parent_xml_node.append(self.copied_data)
-        pub.sendMessage('tree_update', xml_obj=self.copied_data)
-        pub.sendMessage('on_change', event=None)        
+        """
+        Paste / Append the copied XML data to the selected node
+        """
+        if self.copied_data:
+            node = self.tree.GetSelection()
+            parent_xml_node = self.tree.GetPyData(node)
+                
+            parent_xml_node.append(self.copied_data)
+            pub.sendMessage('tree_update', xml_obj=self.copied_data)
+            pub.sendMessage('on_change', event=None)
 
     def add_node(self):
         """
