@@ -3,6 +3,7 @@ import os
 import time
 import utils
 import wx
+import wx.lib.flatnotebook as fnb
 
 from boom_attribute_ed import AttributeEditorPanel
 from boom_tree import BoomTreePanel
@@ -17,11 +18,15 @@ class NewPage(wx.Panel):
     top-level widget for the majority of the application
     """
 
-    def __init__(self, parent, xml_path, size):
+    def __init__(self, parent, xml_path, size, opened_files):
         wx.Panel.__init__(self, parent)
         self.page_id = id(self)
         self.xml_root = None
         self.size = size
+        self.opened_files = opened_files
+        self.current_file = xml_path
+        self.title = os.path.basename(xml_path)
+        
         self.app_location = os.path.dirname(os.path.abspath( __file__ ))
 
         self.tmp_location = os.path.join(self.app_location, 'drafts')
@@ -42,9 +47,6 @@ class NewPage(wx.Panel):
             except IOError:
                 raise IOError('Unable to create file at {}'.format(
                     self.tmp_location))
-
-        self.auto_save_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.auto_save, self.auto_save_timer)
 
         if self.xml_root:
             self.create_editor()
@@ -73,13 +75,11 @@ class NewPage(wx.Panel):
         self.SetSizer(page_sizer)
         self.Layout()
 
-        # Run the timer every 30 seconds
-        self.auto_save_timer.Start(30000)
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def auto_save(self, event):
         """
-        Event handler that is called via timer or pubsub to save the
+        Event handler that is called via pubsub to save the
         current version of the XML to disk in a temporary location
         """
         self.xml_tree.write(self.full_tmp_path)
@@ -123,16 +123,14 @@ class NewPage(wx.Panel):
         """
         Event handler that is called when the panel is being closed
         """
-        if self.auto_save_timer.IsRunning():
-            self.auto_save_timer.Stop()
+        if self.current_file in self.opened_files:
+            self.opened_files.remove(self.current_file)
 
         if os.path.exists(self.full_tmp_path):
             try:
                 os.remove(self.full_tmp_path)
             except IOError:
                 print('Unable to delete file: {}'.format(self.full_tmp_path))
-
-        self.Destroy()
 
 
 class Boomslang(wx.Frame):
@@ -174,14 +172,22 @@ class Boomslang(wx.Frame):
         an XML file
         """
         if not self.notebook:
-            self.notebook = wx.Notebook(self.panel)
+            self.notebook = fnb.FlatNotebook(
+                self.panel)
             self.main_sizer.Add(self.notebook, 1, wx.ALL|wx.EXPAND, 5)
+            style = self.notebook.GetAGWWindowStyleFlag()
+            style |= fnb.FNB_X_ON_TAB
+            self.notebook.SetAGWWindowStyleFlag(style)
+            self.notebook.Bind(
+                fnb.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.on_page_closing)
 
         if self.last_opened_file not in self.opened_files:
-            self.current_page = NewPage(self.notebook, xml_path, self.size)
+            self.current_page = NewPage(self.notebook, xml_path, self.size, 
+                                        self.opened_files)
             self.notebook.AddPage(self.current_page,
                                   os.path.basename(self.last_opened_file),
                                   select=True)
+            
 
             self.opened_files.append(self.last_opened_file)
 
@@ -371,6 +377,13 @@ class Boomslang(wx.Frame):
             self.last_opened_file = xml_path
             self.open_xml_file(xml_path)
             self.update_recent_files(xml_path)
+            
+    def on_page_closing(self, event):
+        print 'Page closing'
+        page = self.notebook.GetCurrentPage()
+        print page.title
+        page.Close()
+        print self.opened_files
 
     def update_recent_files(self, xml_path):
         """
