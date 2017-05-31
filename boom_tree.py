@@ -1,3 +1,4 @@
+import lxml.etree as ET
 import wx
 
 from add_node_dialog import NodeDialog
@@ -81,6 +82,8 @@ class XmlTree(wx.TreeCtrl):
 
         if id(selected_tree_xml_obj) in self.expanded:
             child = self.AppendItem(selection, xml_obj.tag)
+            if xml_obj.getchildren():
+                self.SetItemHasChildren(child)
             self.SetPyData(child, xml_obj)
 
         if selected_tree_xml_obj.getchildren():
@@ -95,6 +98,8 @@ class BoomTreePanel(wx.Panel):
     def __init__(self, parent, xml_obj):
         wx.Panel.__init__(self, parent)
         self.xml_root = xml_obj
+        self.copied_data = None
+        
         pub.subscribe(self.add_node, 'add_node')
         pub.subscribe(self.remove_node, 'remove_node')
 
@@ -115,17 +120,24 @@ class BoomTreePanel(wx.Panel):
         if not hasattr(self, "add_node_id"):
             self.add_node_id = wx.NewId()
             self.remove_node_id = wx.NewId()
+            self.copy_id = wx.NewId()
+            self.paste_id = wx.NewId()
 
             self.Bind(wx.EVT_MENU, self.on_add_remove_node,
                       id=self.add_node_id)
             self.Bind(wx.EVT_MENU, self.on_add_remove_node,
                       id=self.remove_node_id)
+            self.Bind(wx.EVT_MENU, self.on_copy, id=self.copy_id)
+            self.Bind(wx.EVT_MENU, self.on_paste, id=self.paste_id)
 
         # Build the context menu
         menu = wx.Menu()
+        copy_menu_item = menu.Append(self.copy_id, 'Copy')
+        paste_menu_item = menu.Append(self.paste_id, 'Paste')
+        menu.AppendSeparator()
         add_node_menu_item = menu.Append(self.add_node_id, 'Add Node')
         remove_node_menu_item = menu.Append(self.remove_node_id, 'Remove Node')
-
+        
         self.PopupMenu(menu)
         menu.Destroy()
 
@@ -138,6 +150,21 @@ class BoomTreePanel(wx.Panel):
             self.add_node()
         elif evt_id == self.remove_node_id:
             self.remove_node()
+            
+    def on_copy(self, event):
+        """
+        Copy the selected XML object into memory
+        """
+        node = self.tree.GetSelection()
+        self.copied_data = self.tree.GetPyData(node)
+        
+    def on_paste(self, event):
+        node = self.tree.GetSelection()
+        parent_xml_node = self.tree.GetPyData(node)
+            
+        parent_xml_node.append(self.copied_data)
+        pub.sendMessage('tree_update', xml_obj=self.copied_data)
+        pub.sendMessage('on_change', event=None)        
 
     def add_node(self):
         """
