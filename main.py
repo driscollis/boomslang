@@ -181,14 +181,14 @@ class Boomslang(wx.Frame):
             self.notebook.Bind(
                 fnb.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.on_page_closing)
 
-        if self.last_opened_file not in self.opened_files:
+        if xml_path not in self.opened_files:
             self.current_page = NewPage(self.notebook, xml_path, self.size, 
                                         self.opened_files)
             self.notebook.AddPage(self.current_page,
-                                  os.path.basename(self.last_opened_file),
+                                  os.path.basename(xml_path),
                                   select=True)
+            self.last_opened_file = xml_path
             
-
             self.opened_files.append(self.last_opened_file)
 
         self.panel.Layout()
