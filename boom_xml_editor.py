@@ -10,13 +10,15 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
     The panel in the notebook that allows editing of XML element values
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, page_id):
         """Constructor"""
         scrolled.ScrolledPanel.__init__(
             self, parent, style=wx.SUNKEN_BORDER)
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
-        pub.subscribe(self.update_ui, 'ui_updater')
+        self.page_id = page_id
         self.widgets = []
+
+        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
 
         self.SetSizer(self.main_sizer)
 
@@ -48,7 +50,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
 
                 text = child.text if child.text else ''
 
-                value_txt = wx.TextCtrl(self, value=child.text)
+                value_txt = wx.TextCtrl(self, value=text)
                 value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
                 sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
                 self.widgets.append(value_txt)
@@ -104,7 +106,8 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         new
         """
         xml_obj.text = event.GetString()
-        pub.sendMessage('on_change', event=None)
+        pub.sendMessage('on_change_{}'.format(self.page_id),
+                        event=None)
 
     def on_add_node(self, event):
         """

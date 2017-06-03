@@ -11,6 +11,130 @@ from wx.lib.pubsub import pub
 from wx.lib.wordwrap import wordwrap
 
 
+class NewPage(wx.Panel):
+    """
+    Create a new page for each opened XML document. This is the
+    top-level widget for the majority of the application
+    """
+
+    def __init__(self, parent, xml_path, size):
+        wx.Panel.__init__(self, parent)
+        self.page_id = id(self)
+        self.xml_root = None
+        self.size = size
+        self.app_location = os.path.dirname(os.path.abspath( __file__ ))
+
+        self.tmp_location = os.path.join(self.app_location, 'drafts')
+
+        pub.subscribe(self.save, 'save_{}'.format(self.page_id))
+        pub.subscribe(self.auto_save, 'on_change_{}'.format(self.page_id))
+
+        self.parse_xml(xml_path)
+
+        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
+        self.full_tmp_path = os.path.join(
+            self.tmp_location,
+            current_time + '-' + os.path.basename(xml_path))
+
+        if not os.path.exists(self.tmp_location):
+            try:
+                os.makedirs(self.tmp_location)
+            except IOError:
+                raise IOError('Unable to create file at {}'.format(
+                    self.tmp_location))
+
+        self.auto_save_timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.auto_save, self.auto_save_timer)
+
+        if self.xml_root:
+            self.create_editor()
+
+    def create_editor(self):
+        """
+        Create the XML editor widgets
+        """
+        page_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        splitter = wx.SplitterWindow(self)
+        tree_panel = BoomTreePanel(splitter, self.xml_root, self.page_id)
+
+        xml_editor_notebook = wx.Notebook(splitter)
+        xml_editor_panel = XmlEditorPanel(xml_editor_notebook, self.page_id)
+        xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
+
+        attribute_panel = AttributeEditorPanel(
+            xml_editor_notebook, self.page_id)
+        xml_editor_notebook.AddPage(attribute_panel, 'Attributes')
+
+        splitter.SplitVertically(tree_panel, xml_editor_notebook)
+        splitter.SetMinimumPaneSize(self.size[0] / 2)
+        page_sizer.Add(splitter, 1, wx.ALL|wx.EXPAND, 5)
+
+        self.SetSizer(page_sizer)
+        self.Layout()
+
+        # Run the timer every 30 seconds
+        self.auto_save_timer.Start(30000)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
+    def auto_save(self, event):
+        """
+        Event handler that is called via timer or pubsub to save the
+        current version of the XML to disk in a temporary location
+        """
+        self.xml_tree.write(self.full_tmp_path)
+        pub.sendMessage('on_change_status', save_path=self.full_tmp_path)
+
+    def parse_xml(self, xml_path):
+        """
+        Parses the XML from the file that is passed in
+        """
+        self.current_directory = os.path.dirname(xml_path)
+        try:
+            self.xml_tree = ET.parse(xml_path)
+        except IOError:
+            print('Bad file')
+            return
+        except Exception as e:
+            print('Really bad error')
+            print(e)
+            return
+
+        self.xml_root = self.xml_tree.getroot()
+
+    def save(self, location=None):
+        """
+        Save the XML to disk
+        """
+        if not location:
+            path = utils.save_file(self)
+        else:
+            path = location
+
+        if path:
+            if '.xml' not in path:
+                path += '.xml'
+
+            # Save the xml
+            self.xml_tree.write(path)
+            self.changed = False
+
+    def on_close(self, event):
+        """
+        Event handler that is called when the panel is being closed
+        """
+        if self.auto_save_timer.IsRunning():
+            self.auto_save_timer.Stop()
+
+        if os.path.exists(self.full_tmp_path):
+            try:
+                os.remove(self.full_tmp_path)
+            except IOError:
+                print('Unable to delete file: {}'.format(self.full_tmp_path))
+
+        self.Destroy()
+
+
 class Boomslang(wx.Frame):
 
     def __init__(self):
@@ -18,19 +142,21 @@ class Boomslang(wx.Frame):
         wx.Frame.__init__(self, parent=None, title='Boomslang XML',
                           size=(800, 600))
 
-        self.xml_root = None
         self.full_tmp_path = ''
         self.full_saved_path = ''
         self.changed = False
+        self.notebook = None
+        self.opened_files = []
+        self.last_opened_file = None
+        self.current_page = None
 
         self.current_directory = os.path.expanduser('~')
         self.app_location = os.path.dirname(os.path.abspath( __file__ ))
-        self.tmp_location = os.path.join(self.app_location, 'drafts')
         self.recent_files_path = os.path.join(
             self.app_location, 'recent_files.txt')
 
         pub.subscribe(self.save, 'save')
-        pub.subscribe(self.auto_save, 'on_change')
+        pub.subscribe(self.auto_save_status, 'on_change_status')
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
@@ -38,31 +164,27 @@ class Boomslang(wx.Frame):
 
         self.create_menu_and_toolbar()
 
-        self.auto_save_timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.auto_save, self.auto_save_timer)
         self.Bind(wx.EVT_CLOSE, self.on_exit)
 
         self.Show()
 
-    def create_display(self):
+    def create_new_editor(self, xml_path):
         """
         Create the tree and xml editing widgets when the user loads
         an XML file
         """
-        splitter = wx.SplitterWindow(self.panel)
+        if not self.notebook:
+            self.notebook = wx.Notebook(self.panel)
+            self.main_sizer.Add(self.notebook, 1, wx.ALL|wx.EXPAND, 5)
 
-        tree_panel = BoomTreePanel(splitter, self.xml_root)
+        if self.last_opened_file not in self.opened_files:
+            self.current_page = NewPage(self.notebook, xml_path, self.size)
+            self.notebook.AddPage(self.current_page,
+                                  os.path.basename(self.last_opened_file),
+                                  select=True)
 
-        xml_editor_notebook = wx.Notebook(splitter)
-        xml_editor_panel = XmlEditorPanel(xml_editor_notebook)
-        xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
+            self.opened_files.append(self.last_opened_file)
 
-        attribute_panel = AttributeEditorPanel(xml_editor_notebook)
-        xml_editor_notebook.AddPage(attribute_panel, 'Attributes')
-
-        splitter.SplitVertically(tree_panel, xml_editor_notebook)
-        splitter.SetMinimumPaneSize(self.size[0] / 2)
-        self.main_sizer.Add(splitter, 1, wx.ALL|wx.EXPAND, 5)
         self.panel.Layout()
 
     def create_menu_and_toolbar(self):
@@ -175,84 +297,37 @@ class Boomslang(wx.Frame):
             except:
                 pass
 
-    def parse_xml(self, xml_path):
+    def auto_save_status(self, save_path):
         """
-        Parses the XML from the file that is passed in
+        This function is called via PubSub to update the frame's status
         """
-        self.current_directory = os.path.dirname(xml_path)
-        try:
-            self.xml_tree = ET.parse(xml_path)
-        except IOError:
-            print('Bad file')
-            return
-        except Exception as e:
-            print('Really bad error')
-            print(e)
-            return
-
-        self.xml_root = self.xml_tree.getroot()
-
-    def auto_save(self, event):
-        """
-        Event handler that is called via timer or pubsub to save the
-        current version of the XML to disk in a temporary location
-        """
-        print('Autosaving to {} @ {}'.format(self.full_tmp_path, time.ctime()))
+        print('Autosaving to {} @ {}'.format(save_path, time.ctime()))
         msg = 'Autosaved at {}'.format(time.strftime('%H:%M:%S',
                                                      time.localtime()))
         self.status_bar.SetStatusText(msg)
 
-        self.xml_tree.write(self.full_tmp_path)
         self.changed = True
 
     def open_xml_file(self, xml_path):
         """
         Open the specified XML file and load it in the application
         """
-        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
-        self.full_tmp_path = os.path.join(
-            self.tmp_location,
-            current_time + '-' + os.path.basename(xml_path))
-
-        if not os.path.exists(self.tmp_location):
-            try:
-                os.makedirs(self.tmp_location)
-            except IOError:
-                raise IOError('Unable to create file at {}'.format(
-                    self.tmp_location))
-
-        self.parse_xml(xml_path)
-        self.create_display()
-        # Run the timer every 30 seconds
-        self.auto_save_timer.Start(30000)
+        self.create_new_editor(xml_path)
 
     def save(self, location=None):
         """
-        Save the XML to disk
+        Update the frame with save status
         """
-        if self.xml_root is None:
+        if self.current_page.xml_root is None:
             utils.warn_nothing_to_save()
             return
 
-        if not location:
-            path = utils.save_file(self)
-        else:
-            path = location
+        pub.sendMessage('save_{}'.format(self.current_page.page_id))
 
-        if path:
-            if '.xml' not in path:
-                path += '.xml'
-
-            # Update the current directory to the save location
-            self.current_directory = os.path.dirname(path)
-            self.full_saved_path = path
-
-            # Save the xml
-            self.xml_tree.write(path)
-            self.changed = False
-            msg = 'Last saved at {}'.format(time.strftime('%H:%M:%S',
-                                                          time.localtime()))
-            self.status_bar.SetStatusText(msg)
+        self.changed = False
+        msg = 'Last saved at {}'.format(time.strftime('%H:%M:%S',
+                                                      time.localtime()))
+        self.status_bar.SetStatusText(msg)
 
     def on_about_box(self, event):
         """
@@ -293,6 +368,7 @@ class Boomslang(wx.Frame):
         xml_path = utils.open_file(self)
 
         if xml_path:
+            self.last_opened_file = xml_path
             self.open_xml_file(xml_path)
             self.update_recent_files(xml_path)
 
@@ -352,22 +428,6 @@ class Boomslang(wx.Frame):
         """
         Event handler that closes the application
         """
-        if self.full_saved_path and self.full_tmp_path and self.changed:
-            # verify that the draft file is actually different from the
-            # in-memory version via md5 hash
-            current = utils.is_save_current(self.full_saved_path,
-                                                 self.full_tmp_path)
-            if not current:
-                utils.warn_not_saved()
-
-        if self.auto_save_timer.IsRunning():
-            self.auto_save_timer.Stop()
-        if os.path.exists(self.full_tmp_path):
-            try:
-                os.remove(self.full_tmp_path)
-            except IOError:
-                print('Unable to delete file: {}'.format(self.full_tmp_path))
-
         self.Destroy()
 
 # ------------------------------------------------------------------------------

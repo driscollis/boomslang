@@ -15,24 +15,28 @@ class XmlTree(wx.TreeCtrl):
         wx.TreeCtrl.__init__(self, parent, wx_id, pos, size, style)
         self.expanded= {}
         self.xml_root = parent.xml_root
-        pub.subscribe(self.update_tree, 'tree_update')
+        self.page_id = parent.page_id
+        pub.subscribe(self.update_tree,
+                      'tree_update_{}'.format(self.page_id))
 
         root = self.AddRoot(self.xml_root.tag)
         self.expanded[id(self.xml_root)] = ''
         self.SetPyData(root, self.xml_root)
-        wx.CallAfter(pub.sendMessage, 'ui_updater', xml_obj=self.xml_root)
+        wx.CallAfter(pub.sendMessage,
+                     'ui_updater_{}'.format(self.page_id),
+                     xml_obj=self.xml_root)
 
         if self.xml_root.getchildren():
             for top_level_item in self.xml_root.getchildren():
                 child = self.AppendItem(root, top_level_item.tag)
-                if top_level_item.getchildren(): 
+                if top_level_item.getchildren():
                     self.SetItemHasChildren(child)
                 self.SetPyData(child, top_level_item)
 
         self.Expand(root)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
         self.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_tree_selection)
-        
+
     def add_elements(self, item, book):
         """
         Add items to the tree control
@@ -71,7 +75,8 @@ class XmlTree(wx.TreeCtrl):
         """
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
-        pub.sendMessage('ui_updater', xml_obj=xml_obj)
+        pub.sendMessage('ui_updater_{}'.format(self.page_id),
+                        xml_obj=xml_obj)
 
     def update_tree(self, xml_obj):
         """
@@ -95,13 +100,16 @@ class BoomTreePanel(wx.Panel):
     The panel class that contains the XML tree control
     """
 
-    def __init__(self, parent, xml_obj):
+    def __init__(self, parent, xml_obj, page_id):
         wx.Panel.__init__(self, parent)
         self.xml_root = xml_obj
         self.copied_data = None
-        
-        pub.subscribe(self.add_node, 'add_node')
-        pub.subscribe(self.remove_node, 'remove_node')
+        self.page_id = page_id
+
+        pub.subscribe(self.add_node,
+                      'add_node_{}'.format(self.page_id))
+        pub.subscribe(self.remove_node,
+                      'remove_node_{}'.format(self.page_id))
 
         self.tree = XmlTree(
             self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
@@ -137,7 +145,7 @@ class BoomTreePanel(wx.Panel):
         menu.AppendSeparator()
         add_node_menu_item = menu.Append(self.add_node_id, 'Add Node')
         remove_node_menu_item = menu.Append(self.remove_node_id, 'Remove Node')
-        
+
         self.PopupMenu(menu)
         menu.Destroy()
 
@@ -150,14 +158,14 @@ class BoomTreePanel(wx.Panel):
             self.add_node()
         elif evt_id == self.remove_node_id:
             self.remove_node()
-            
+
     def on_copy(self, event):
         """
         Copy the selected XML object into memory
         """
         node = self.tree.GetSelection()
         self.copied_data = self.tree.GetPyData(node)
-        
+
     def on_paste(self, event):
         """
         Paste / Append the copied XML data to the selected node
@@ -165,10 +173,12 @@ class BoomTreePanel(wx.Panel):
         if self.copied_data:
             node = self.tree.GetSelection()
             parent_xml_node = self.tree.GetPyData(node)
-                
+
             parent_xml_node.append(self.copied_data)
-            pub.sendMessage('tree_update', xml_obj=self.copied_data)
-            pub.sendMessage('on_change', event=None)
+            pub.sendMessage('tree_update_{}'.format(self.page_id),
+                            xml_obj=self.copied_data)
+            pub.sendMessage('on_change_{}'.format(self.page_id),
+                            event=None)
 
     def add_node(self):
         """
@@ -177,6 +187,7 @@ class BoomTreePanel(wx.Panel):
         node = self.tree.GetSelection()
         data = self.tree.GetPyData(node)
         dlg = NodeDialog(data,
+                         page_id=self.page_id,
                          title = 'New Node',
                          label_one = 'Element Tag',
                          label_two = 'Element Value'
@@ -203,5 +214,6 @@ class BoomTreePanel(wx.Panel):
                 parent.remove(xml_node)
                 self.tree.DeleteChildren(node)
                 self.tree.Delete(node)
-                pub.sendMessage('on_change', event=None)
+                pub.sendMessage('on_change_{}'.format(self.page_id),
+                                event=None)
             dlg.Destroy()

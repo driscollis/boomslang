@@ -23,13 +23,15 @@ class AttributeEditorPanel(wx.Panel):
     XML attribute elements
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, page_id):
         wx.Panel.__init__(self, parent)
-        pub.subscribe(self.update_ui, 'ui_updater')
+        self.page_id = page_id
         self.xml_obj = None
         self.widgets = []
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
 
+        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
 
     def update_ui(self, xml_obj):
@@ -90,6 +92,7 @@ class AttributeEditorPanel(wx.Panel):
         """
         dlg = AttributeDialog(
             self.xml_obj,
+            page_id=self.page_id,
             title = 'Add Attribute',
             label_one = 'Attribute',
             label_two = 'Value'
@@ -118,7 +121,8 @@ class AttributeEditorPanel(wx.Panel):
             self.xml_obj.attrib[new_key] = state.val_widget.GetValue()
             state.previous_key = state.current_key
             state.current_key = new_key
-            pub.sendMessage('on_change', event=None)
+            pub.sendMessage('on_change_{}'.format(self.page_id),
+                            event=None)
 
     def on_val_change(self, event, attr):
         """
@@ -127,4 +131,5 @@ class AttributeEditorPanel(wx.Panel):
         """
         new_val = event.GetString()
         self.xml_obj.attrib[attr.GetValue()] = new_val
-        pub.sendMessage('on_change', event=None)
+        pub.sendMessage('on_change_{}'.format(self.page_id),
+                        event=None)

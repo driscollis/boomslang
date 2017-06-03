@@ -22,8 +22,10 @@ class NodeDialog(EditDialog):
         element = ET.SubElement(
             self.xml_obj, self.value_one.GetValue())
         element.text = self.value_two.GetValue()
-        pub.sendMessage('tree_update', xml_obj=element)
-        pub.sendMessage('on_change', event=None)
+        pub.sendMessage('tree_update_{}'.format(self.page_id),
+                        xml_obj=element)
+        pub.sendMessage('on_change_{}'.format(self.page_id),
+                        event=None)
         self.Close()
 
 if __name__ == '__main__':

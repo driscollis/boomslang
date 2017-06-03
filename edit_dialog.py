@@ -6,9 +6,17 @@ class EditDialog(wx.Dialog):
     dialogs from
     """
 
-    def __init__(self, xml_obj, title, label_one, label_two):
+    def __init__(self, xml_obj, page_id, title, label_one, label_two):
+        """
+        @param xml_obj: The lxml XML object
+        @param page_id: A unique id based on the current page being viewed
+        @param title: The title of the dialog
+        @param label_one: The label text for the first text control
+        @param label_two: The label text for the second text control
+        """
         wx.Dialog.__init__(self, None, title=title)
         self.xml_obj = xml_obj
+        self.page_id = page_id
 
         flex_sizer = wx.FlexGridSizer(rows=2, cols=2)
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
