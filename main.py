@@ -10,6 +10,7 @@ from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
 from wx.lib.pubsub import pub
 from wx.lib.wordwrap import wordwrap
+from xml_viewer import XmlViewer
 
 
 class NewPage(wx.Panel):
@@ -26,7 +27,7 @@ class NewPage(wx.Panel):
         self.opened_files = opened_files
         self.current_file = xml_path
         self.title = os.path.basename(xml_path)
-        
+
         self.app_location = os.path.dirname(os.path.abspath( __file__ ))
 
         self.tmp_location = os.path.join(self.app_location, 'drafts')
@@ -182,13 +183,13 @@ class Boomslang(wx.Frame):
                 fnb.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.on_page_closing)
 
         if xml_path not in self.opened_files:
-            self.current_page = NewPage(self.notebook, xml_path, self.size, 
+            self.current_page = NewPage(self.notebook, xml_path, self.size,
                                         self.opened_files)
             self.notebook.AddPage(self.current_page,
                                   os.path.basename(xml_path),
                                   select=True)
             self.last_opened_file = xml_path
-            
+
             self.opened_files.append(self.last_opened_file)
 
         self.panel.Layout()
@@ -259,6 +260,13 @@ class Boomslang(wx.Frame):
         remove_node_tool = self.toolbar.AddSimpleTool(
             wx.ID_ANY, remove_ico, "Remove Node", "Removes the XML Node")
         self.Bind(wx.EVT_MENU, self.on_remove_node, remove_node_tool)
+
+        # Create a preview XML button
+        preview_ico = wx.ArtProvider.GetBitmap(
+            wx.ART_REPORT_VIEW, wx.ART_TOOLBAR, (16,16))
+        preview_tool = self.toolbar.AddSimpleTool(
+            wx.ID_ANY, preview_ico, 'Preview XML', 'Previews XML')
+        self.Bind(wx.EVT_MENU, self.on_preview_xml, preview_tool)
 
         self.toolbar.Realize()
 
@@ -377,13 +385,27 @@ class Boomslang(wx.Frame):
             self.last_opened_file = xml_path
             self.open_xml_file(xml_path)
             self.update_recent_files(xml_path)
-            
+
     def on_page_closing(self, event):
+        """
+        Event handler that is called when a page in the notebook is closing
+        """
         print 'Page closing'
         page = self.notebook.GetCurrentPage()
         print page.title
         page.Close()
         print self.opened_files
+
+    def on_preview_xml(self, event):
+        """
+        Event handler called for previewing the current state of the XML
+        in memory
+        """
+        if self.last_opened_file:
+            previewer = XmlViewer(
+                xml_file=self.last_opened_file)
+            previewer.ShowModal()
+            previewer.Destroy()
 
     def update_recent_files(self, xml_path):
         """
