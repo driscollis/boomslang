@@ -266,13 +266,8 @@ class Boomslang(wx.Frame):
         """
         Event handler that is called when a page in the notebook is closing
         """
-        import wx.lib.inspection
-        wx.lib.inspection.InspectionTool().Show()
-        print 'Page closing'
         page = self.notebook.GetCurrentPage()
-        print page.title
         page.Close()
-        print self.opened_files
         if not self.opened_files:
             wx.CallAfter(self.notebook.Destroy)
             self.notebook = None
