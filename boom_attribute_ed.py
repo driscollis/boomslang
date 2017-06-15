@@ -48,7 +48,7 @@ class AttributeEditorPanel(wx.Panel):
         attr_lbl = wx.StaticText(self, label='Attribute')
         value_lbl = wx.StaticText(self, label='Value')
         sizer.Add(attr_lbl, 0, wx.ALL, 5)
-        sizer.AddSpacer((135, 0))
+        sizer.AddSpacer(135, 0)
         sizer.Add(value_lbl, 0, wx.ALL, 5)
         self.widgets.extend([attr_lbl, value_lbl])
 
