@@ -17,6 +17,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.page_id = page_id
         self.widgets = []
+        self.label_spacer = None
 
         pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
 
@@ -26,15 +27,15 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         """
         Update the panel's user interface based on the data
         """
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.clear()
 
         tag_lbl = wx.StaticText(self, label='Tags')
         value_lbl = wx.StaticText(self, label='Value')
-        sizer.Add(tag_lbl, 0, wx.ALL, 5)
-        sizer.AddSpacer(55, 0)
-        sizer.Add(value_lbl, 0, wx.ALL, 5)
-        self.main_sizer.Add(sizer)
+        self.label_sizer.Add(tag_lbl, 0, wx.ALL, 5)
+        self.label_sizer.Add((55, 0))
+        self.label_sizer.Add(value_lbl, 0, wx.ALL, 5)
+        self.main_sizer.Add(self.label_sizer)
 
         self.widgets.extend([tag_lbl, value_lbl])
 
