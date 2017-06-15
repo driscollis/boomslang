@@ -32,7 +32,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         tag_lbl = wx.StaticText(self, label='Tags')
         value_lbl = wx.StaticText(self, label='Value')
         sizer.Add(tag_lbl, 0, wx.ALL, 5)
-        sizer.AddSpacer((55, 0))
+        sizer.AddSpacer(55, 0)
         sizer.Add(value_lbl, 0, wx.ALL, 5)
         self.main_sizer.Add(sizer)
 
