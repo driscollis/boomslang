@@ -2,7 +2,13 @@ import os
 import time
 import utils
 import wx
-import wx.lib.flatnotebook as fnb
+
+try:
+    # wxPython 3 and earlier
+    import wx.lib.flatnotebook as fnb
+except ImportError:
+    # wxPython 4+ / Phoenix
+    import wx.lib.agw.flatnotebook as fnb
 
 from editor_page import NewPage
 from wx.lib.pubsub import pub
