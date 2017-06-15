@@ -168,7 +168,7 @@ class Boomslang(wx.Frame):
 
         #-----------------------------------------------------------------------
         # Create status bar
-        self.status_bar = self.CreateStatusBar(1, wx.ST_SIZEGRIP)
+        self.status_bar = self.CreateStatusBar(1)
 
         msg = 'Welcome to Boomslang XML (c) Michael Driscoll - 2017'
         self.status_bar.SetStatusText(msg)
