@@ -36,7 +36,8 @@ class XmlSTC(stc.StyledTextCtrl):
 class XmlViewer(wx.Dialog):
 
     def __init__(self, xml_file):
-        wx.Dialog.__init__(self, parent=None, title='XML Viewer')
+        wx.Dialog.__init__(self, parent=None, title='XML Viewer',
+                           style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
         self.xml_view = XmlSTC(self, xml_file)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
