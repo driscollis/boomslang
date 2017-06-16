@@ -94,8 +94,17 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         """
         Clears the widgets from the panel in preparation for an update
         """
+        sizers = {}
         for widget in self.widgets:
+            sizer = widget.GetContainingSizer()
+            if sizer:
+                sizer_id = id(sizer)
+                if sizer_id not in sizers:
+                    sizers[sizer_id] = sizer
             widget.Destroy()
+
+        for sizer in sizers:
+            self.main_sizer.Remove(sizers[sizer])
 
         self.widgets = []
         self.Layout()
