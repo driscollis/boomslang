@@ -123,4 +123,4 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         """
         Event handler that adds an XML node using pubsub
         """
-        Publisher.sendMessage('add_node')
+        Publisher.sendMessage('add_node_{}'.format(self.page_id))

@@ -29,7 +29,7 @@ class AttributeEditorPanel(wx.Panel):
         self.xml_obj = None
         self.widgets = []
 
-        PublisherPublisher.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+        Publisher.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
