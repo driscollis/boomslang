@@ -21,7 +21,7 @@ class XmlTree(wx.TreeCtrl):
 
         root = self.AddRoot(self.xml_root.tag)
         self.expanded[id(self.xml_root)] = ''
-        self.SetPyData(root, self.xml_root)
+        self.SetItemData(root, self.xml_root)
         wx.CallAfter(Publisher.sendMessage,
                      'ui_updater_{}'.format(self.page_id),
                      xml_obj=self.xml_root)
@@ -31,7 +31,7 @@ class XmlTree(wx.TreeCtrl):
                 child = self.AppendItem(root, top_level_item.tag)
                 if top_level_item.getchildren():
                     self.SetItemHasChildren(child)
-                self.SetPyData(child, top_level_item)
+                self.SetItemData(child, top_level_item)
 
         self.Expand(root)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.on_item_expanding)
@@ -43,7 +43,7 @@ class XmlTree(wx.TreeCtrl):
         """
         for element in book.getchildren():
             child = self.AppendItem(item, element.tag)
-            self.SetPyData(child, element)
+            self.SetItemData(child, element)
             if element.getchildren():
                 self.SetItemHasChildren(child)
 
@@ -55,12 +55,12 @@ class XmlTree(wx.TreeCtrl):
         and added to the tree
         """
         item = event.GetItem()
-        xml_obj = self.GetPyData(item)
+        xml_obj = self.GetItemData(item)
 
         if id(xml_obj) not in self.expanded and xml_obj is not None:
             for top_level_item in xml_obj.getchildren():
                 child = self.AppendItem(item, top_level_item.tag)
-                self.SetPyData(child, top_level_item)
+                self.SetItemData(child, top_level_item)
                 if top_level_item.getchildren():
                     self.SetItemHasChildren(child)
 
@@ -74,7 +74,7 @@ class XmlTree(wx.TreeCtrl):
         to allow editing of the XML
         """
         item = event.GetItem()
-        xml_obj = self.GetPyData(item)
+        xml_obj = self.GetItemData(item)
         Publisher.sendMessage('ui_updater_{}'.format(self.page_id),
                         xml_obj=xml_obj)
 
@@ -83,13 +83,13 @@ class XmlTree(wx.TreeCtrl):
         Update the tree with the new data
         """
         selection = self.GetSelection()
-        selected_tree_xml_obj = self.GetPyData(selection)
+        selected_tree_xml_obj = self.GetItemData(selection)
 
         if id(selected_tree_xml_obj) in self.expanded:
             child = self.AppendItem(selection, xml_obj.tag)
             if xml_obj.getchildren():
                 self.SetItemHasChildren(child)
-            self.SetPyData(child, xml_obj)
+            self.SetItemData(child, xml_obj)
 
         if selected_tree_xml_obj.getchildren():
             self.SetItemHasChildren(selection)
@@ -164,7 +164,7 @@ class BoomTreePanel(wx.Panel):
         Copy the selected XML object into memory
         """
         node = self.tree.GetSelection()
-        self.copied_data = self.tree.GetPyData(node)
+        self.copied_data = self.tree.GetItemData(node)
 
     def on_paste(self, event):
         """
@@ -172,7 +172,7 @@ class BoomTreePanel(wx.Panel):
         """
         if self.copied_data:
             node = self.tree.GetSelection()
-            parent_xml_node = self.tree.GetPyData(node)
+            parent_xml_node = self.tree.GetItemData(node)
 
             parent_xml_node.append(self.copied_data)
             Publisher.sendMessage('tree_update_{}'.format(self.page_id),
@@ -185,7 +185,7 @@ class BoomTreePanel(wx.Panel):
         Add a sub-node to the selected item in the tree
         """
         node = self.tree.GetSelection()
-        data = self.tree.GetPyData(node)
+        data = self.tree.GetItemData(node)
         dlg = NodeDialog(data,
                          page_id=self.page_id,
                          title = 'New Node',
@@ -199,7 +199,7 @@ class BoomTreePanel(wx.Panel):
         Remove the selected node from the tree
         """
         node = self.tree.GetSelection()
-        xml_node = self.tree.GetPyData(node)
+        xml_node = self.tree.GetItemData(node)
 
         if node:
             msg = 'Are you sure you want to delete the {node} node'

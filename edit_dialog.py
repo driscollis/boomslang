@@ -18,7 +18,7 @@ class EditDialog(wx.Dialog):
         self.xml_obj = xml_obj
         self.page_id = page_id
 
-        flex_sizer = wx.FlexGridSizer(rows=2, cols=2)
+        flex_sizer = wx.FlexGridSizer(2, 2, gap=wx.Size(5, 5))
         btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
         main_sizer = wx.BoxSizer(wx.VERTICAL)
 

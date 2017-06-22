@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import utils
 import wx
@@ -92,7 +93,7 @@ class Boomslang(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_open, open_menu_item)
 
         sub_menu = self.create_recent_items()
-        file_menu.AppendMenu(wx.NewId(), 'Recent', sub_menu)
+        file_menu.Append(wx.NewId(), 'Recent', sub_menu)
 
         save_menu_item = file_menu.Append(
             wx.NewId(), 'Save', '')
@@ -118,14 +119,14 @@ class Boomslang(wx.Frame):
 
         open_ico = wx.ArtProvider.GetBitmap(
             wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
-        open_tool = self.toolbar.AddSimpleTool(
-            wx.ID_ANY, open_ico, "Open", "Open an XML File")
+        open_tool = self.toolbar.AddTool(
+            wx.ID_ANY, "Open", open_ico, "Open an XML File")
         self.Bind(wx.EVT_MENU, self.on_open, open_tool)
 
         save_ico = wx.ArtProvider.GetBitmap(
             wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16,16))
-        save_tool = self.toolbar.AddSimpleTool(
-            wx.ID_ANY, save_ico, "Save", "Saves the XML")
+        save_tool = self.toolbar.AddTool(
+            wx.ID_ANY, "Save", save_ico, "Saves the XML")
         self.Bind(wx.EVT_MENU, self.on_save, save_tool)
 
         self.toolbar.AddSeparator()
@@ -133,22 +134,22 @@ class Boomslang(wx.Frame):
         # Create the add node toolbar button
         add_ico = wx.ArtProvider.GetBitmap(
             wx.ART_PLUS, wx.ART_TOOLBAR, (16,16))
-        add_tool = self.toolbar.AddSimpleTool(
-            wx.ID_ANY, add_ico, "Add Node", "Adds an XML Node")
+        add_tool = self.toolbar.AddTool(
+            wx.ID_ANY, "Add Node", add_ico, "Adds an XML Node")
         self.Bind(wx.EVT_MENU, self.on_add_node, add_tool)
 
         # Create the delete node button
         remove_ico = wx.ArtProvider.GetBitmap(
             wx.ART_MINUS, wx.ART_TOOLBAR, (16,16))
-        remove_node_tool = self.toolbar.AddSimpleTool(
-            wx.ID_ANY, remove_ico, "Remove Node", "Removes the XML Node")
+        remove_node_tool = self.toolbar.AddTool(
+            wx.ID_ANY, "Remove Node", remove_ico, "Removes the XML Node")
         self.Bind(wx.EVT_MENU, self.on_remove_node, remove_node_tool)
 
         # Create a preview XML button
         preview_ico = wx.ArtProvider.GetBitmap(
             wx.ART_REPORT_VIEW, wx.ART_TOOLBAR, (16,16))
-        preview_tool = self.toolbar.AddSimpleTool(
-            wx.ID_ANY, preview_ico, 'Preview XML', 'Previews XML')
+        preview_tool = self.toolbar.AddTool(
+            wx.ID_ANY, 'Preview XML', preview_ico, 'Previews XML')
         self.Bind(wx.EVT_MENU, self.on_preview_xml, preview_tool)
 
         self.toolbar.Realize()
