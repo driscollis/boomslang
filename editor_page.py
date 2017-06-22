@@ -47,7 +47,7 @@ class NewPage(wx.Panel):
                 raise IOError('Unable to create file at {}'.format(
                     self.tmp_location))
 
-        if self.xml_root:
+        if self.xml_root is not None:
             self.create_editor()
 
     def create_editor(self):
