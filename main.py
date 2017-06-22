@@ -33,7 +33,7 @@ class Boomslang(wx.Frame):
         self.current_page = None
 
         self.current_directory = os.path.expanduser('~')
-        self.app_location = os.path.dirname(os.path.abspath( __file__ ))
+        self.app_location = os.path.dirname(os.path.abspath( sys.argv[0] ))
         self.recent_files_path = os.path.join(
             self.app_location, 'recent_files.txt')
 

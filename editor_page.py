@@ -1,5 +1,6 @@
 import lxml.etree as ET
 import os
+import sys
 import time
 import utils
 import wx
@@ -25,7 +26,7 @@ class NewPage(wx.Panel):
         self.current_file = xml_path
         self.title = os.path.basename(xml_path)
 
-        self.app_location = os.path.dirname(os.path.abspath( __file__ ))
+        self.app_location = os.path.dirname(os.path.abspath( sys.argv[0] ))
 
         self.tmp_location = os.path.join(self.app_location, 'drafts')
 
