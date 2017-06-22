@@ -7,7 +7,7 @@ import wx
 from boom_attribute_ed import AttributeEditorPanel
 from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import pub as Publisher
 
 
 class NewPage(wx.Panel):
@@ -29,8 +29,8 @@ class NewPage(wx.Panel):
 
         self.tmp_location = os.path.join(self.app_location, 'drafts')
 
-        pub.subscribe(self.save, 'save_{}'.format(self.page_id))
-        pub.subscribe(self.auto_save, 'on_change_{}'.format(self.page_id))
+        Publisher.subscribe(self.save, 'save_{}'.format(self.page_id))
+        Publisher.subscribe(self.auto_save, 'on_change_{}'.format(self.page_id))
 
         self.parse_xml(xml_path)
 
@@ -81,7 +81,7 @@ class NewPage(wx.Panel):
         current version of the XML to disk in a temporary location
         """
         self.xml_tree.write(self.full_tmp_path)
-        pub.sendMessage('on_change_status', save_path=self.full_tmp_path)
+        Publisher.sendMessage('on_change_status', save_path=self.full_tmp_path)
 
     def parse_xml(self, xml_path):
         """

@@ -2,7 +2,7 @@ import lxml.etree as ET
 import wx
 
 from add_node_dialog import NodeDialog
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import pub as Publisher
 
 
 class XmlTree(wx.TreeCtrl):
@@ -16,13 +16,13 @@ class XmlTree(wx.TreeCtrl):
         self.expanded= {}
         self.xml_root = parent.xml_root
         self.page_id = parent.page_id
-        pub.subscribe(self.update_tree,
+        Publisher.subscribe(self.update_tree,
                       'tree_update_{}'.format(self.page_id))
 
         root = self.AddRoot(self.xml_root.tag)
         self.expanded[id(self.xml_root)] = ''
         self.SetPyData(root, self.xml_root)
-        wx.CallAfter(pub.sendMessage,
+        wx.CallAfter(Publisher.sendMessage,
                      'ui_updater_{}'.format(self.page_id),
                      xml_obj=self.xml_root)
 
@@ -75,7 +75,7 @@ class XmlTree(wx.TreeCtrl):
         """
         item = event.GetItem()
         xml_obj = self.GetPyData(item)
-        pub.sendMessage('ui_updater_{}'.format(self.page_id),
+        Publisher.sendMessage('ui_updater_{}'.format(self.page_id),
                         xml_obj=xml_obj)
 
     def update_tree(self, xml_obj):
@@ -106,9 +106,9 @@ class BoomTreePanel(wx.Panel):
         self.copied_data = None
         self.page_id = page_id
 
-        pub.subscribe(self.add_node,
+        Publisher.subscribe(self.add_node,
                       'add_node_{}'.format(self.page_id))
-        pub.subscribe(self.remove_node,
+        Publisher.subscribe(self.remove_node,
                       'remove_node_{}'.format(self.page_id))
 
         self.tree = XmlTree(
@@ -175,9 +175,9 @@ class BoomTreePanel(wx.Panel):
             parent_xml_node = self.tree.GetPyData(node)
 
             parent_xml_node.append(self.copied_data)
-            pub.sendMessage('tree_update_{}'.format(self.page_id),
+            Publisher.sendMessage('tree_update_{}'.format(self.page_id),
                             xml_obj=self.copied_data)
-            pub.sendMessage('on_change_{}'.format(self.page_id),
+            Publisher.sendMessage('on_change_{}'.format(self.page_id),
                             event=None)
 
     def add_node(self):
@@ -214,6 +214,6 @@ class BoomTreePanel(wx.Panel):
                 parent.remove(xml_node)
                 self.tree.DeleteChildren(node)
                 self.tree.Delete(node)
-                pub.sendMessage('on_change_{}'.format(self.page_id),
+                Publisher.sendMessage('on_change_{}'.format(self.page_id),
                                 event=None)
             dlg.Destroy()

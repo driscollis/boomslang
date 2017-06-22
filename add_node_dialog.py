@@ -2,7 +2,7 @@ import lxml.etree as ET
 import wx
 
 from edit_dialog import EditDialog
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import pub as Publisher
 
 
 class NodeDialog(EditDialog):
@@ -24,7 +24,7 @@ class NodeDialog(EditDialog):
         element.text = self.value_two.GetValue()
         pub.sendMessage('tree_update_{}'.format(self.page_id),
                         xml_obj=element)
-        pub.sendMessage('on_change_{}'.format(self.page_id),
+        Publisher.sendMessage('on_change_{}'.format(self.page_id),
                         event=None)
         self.Close()
 

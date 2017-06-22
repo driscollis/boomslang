@@ -1,7 +1,7 @@
 import wx
 
 from edit_dialog import EditDialog
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import pub as Publisher
 
 
 class AttributeDialog(EditDialog):
@@ -22,9 +22,9 @@ class AttributeDialog(EditDialog):
         value = self.value_two.GetValue()
         if attr:
             self.xml_obj.attrib[attr] = value
-            pub.sendMessage('ui_updater_{}'.format(self.page_id),
+            Publisher.sendMessage('ui_updater_{}'.format(self.page_id),
                             xml_obj=self.xml_obj)
-            pub.sendMessage('on_change_{}'.format(self.page_id),
+            Publisher.sendMessage('on_change_{}'.format(self.page_id),
                             event=None)
         else:
             # TODO - Show a dialog telling the user that there is no attr to save

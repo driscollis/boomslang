@@ -11,7 +11,8 @@ except ImportError:
     import wx.lib.agw.flatnotebook as fnb
 
 from editor_page import NewPage
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import setuparg1
+from wx.lib.pubsub import pub as Publisher
 from wx.lib.wordwrap import wordwrap
 from xml_viewer import XmlViewer
 
@@ -36,8 +37,8 @@ class Boomslang(wx.Frame):
         self.recent_files_path = os.path.join(
             self.app_location, 'recent_files.txt')
 
-        pub.subscribe(self.save, 'save')
-        pub.subscribe(self.auto_save_status, 'on_change_status')
+        Publisher.subscribe(self.save, 'save')
+        Publisher.subscribe(self.auto_save_status, 'on_change_status')
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
@@ -218,7 +219,7 @@ class Boomslang(wx.Frame):
             utils.warn_nothing_to_save()
             return
 
-        pub.sendMessage('save_{}'.format(self.current_page.page_id))
+        Publisher.sendMessage('save_{}'.format(self.current_page.page_id))
 
         self.changed = False
         msg = 'Last saved at {}'.format(time.strftime('%H:%M:%S',
@@ -249,13 +250,13 @@ class Boomslang(wx.Frame):
         Event handler that is fired when an XML node is added to the
         selected node
         """
-        pub.sendMessage('add_node')
+        Publisher.sendMessage('add_node')
 
     def on_remove_node(self, event):
         """
         Event handler that is fired when an XML node is removed
         """
-        pub.sendMessage('remove_node')
+        Publisher.sendMessage('remove_node')
 
     def on_open(self, event):
         """

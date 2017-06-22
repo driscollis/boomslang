@@ -2,7 +2,7 @@ import wx
 import wx.lib.scrolledpanel as scrolled
 
 from functools import partial
-from wx.lib.pubsub import pub
+from wx.lib.pubsub import pub as Publisher
 
 
 class XmlEditorPanel(scrolled.ScrolledPanel):
@@ -19,7 +19,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.widgets = []
         self.label_spacer = None
 
-        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+        Publisher.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
 
         self.SetSizer(self.main_sizer)
 
@@ -116,11 +116,11 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         new
         """
         xml_obj.text = event.GetString()
-        pub.sendMessage('on_change_{}'.format(self.page_id),
+        Publisher.sendMessage('on_change_{}'.format(self.page_id),
                         event=None)
 
     def on_add_node(self, event):
         """
         Event handler that adds an XML node using pubsub
         """
-        pub.sendMessage('add_node')
+        Publisher.sendMessage('add_node')
