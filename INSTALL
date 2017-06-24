@@ -1,0 +1,11 @@
+How to Install Boomslang
+
+Currently the only way to install Boomslang is to download the code from Github at https://github.com/driscollis/boomslang
+
+You will need the following installed:
+
+ - Python 3.5+
+ - wxPython 4+
+ - lxml 3.8+
+
+Assuming all of the above is installed, then all you need to do is download the code from Github and run main.py
