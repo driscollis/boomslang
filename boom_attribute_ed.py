@@ -2,7 +2,7 @@ import wx
 
 from attribute_dialog import AttributeDialog
 from functools import partial
-from wx.lib.pubsub import pub as Publisher
+from pubsub import pub
 
 
 class State():
@@ -29,7 +29,7 @@ class AttributeEditorPanel(wx.Panel):
         self.xml_obj = None
         self.widgets = []
 
-        Publisher.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
@@ -130,7 +130,7 @@ class AttributeEditorPanel(wx.Panel):
             self.xml_obj.attrib[new_key] = state.val_widget.GetValue()
             state.previous_key = state.current_key
             state.current_key = new_key
-            Publisher.sendMessage('on_change_{}'.format(self.page_id),
+            pub.sendMessage('on_change_{}'.format(self.page_id),
                             event=None)
 
     def on_val_change(self, event, attr):
@@ -140,5 +140,5 @@ class AttributeEditorPanel(wx.Panel):
         """
         new_val = event.GetString()
         self.xml_obj.attrib[attr.GetValue()] = new_val
-        Publisher.sendMessage('on_change_{}'.format(self.page_id),
+        pub.sendMessage('on_change_{}'.format(self.page_id),
                         event=None)

@@ -2,10 +2,7 @@ import hashlib
 import os
 import wx
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 
 wildcard = "XML (*.xml)|*.xml|" \

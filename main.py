@@ -3,19 +3,13 @@ import sys
 import time
 import utils
 import wx
-
-try:
-    # wxPython 3 and earlier
-    import wx.lib.flatnotebook as fnb
-except ImportError:
-    # wxPython 4+ / Phoenix
-    import wx.lib.agw.flatnotebook as fnb
+import wx.adv
+import wx.lib.agw.flatnotebook as fnb
 
 from editor_page import NewPage
-from wx.lib.pubsub import setuparg1
-from wx.lib.pubsub import pub as Publisher
-from wx.lib.wordwrap import wordwrap
+from pubsub import pub
 from xml_viewer import XmlViewer
+from wx.lib.wordwrap import wordwrap
 
 
 class Boomslang(wx.Frame):
@@ -38,8 +32,8 @@ class Boomslang(wx.Frame):
         self.recent_files_path = os.path.join(
             self.app_location, 'recent_files.txt')
 
-        Publisher.subscribe(self.save, 'save')
-        Publisher.subscribe(self.auto_save_status, 'on_change_status')
+        pub.subscribe(self.save, 'save')
+        pub.subscribe(self.auto_save_status, 'on_change_status')
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
@@ -172,7 +166,7 @@ class Boomslang(wx.Frame):
         # Create status bar
         self.status_bar = self.CreateStatusBar(1)
 
-        msg = 'Welcome to Boomslang XML (c) Michael Driscoll - 2017'
+        msg = 'Welcome to Boomslang XML (c) Michael Driscoll - 2017-2019'
         self.status_bar.SetStatusText(msg)
 
     def create_recent_items(self):
@@ -220,7 +214,7 @@ class Boomslang(wx.Frame):
             utils.warn_nothing_to_save()
             return
 
-        Publisher.sendMessage('save_{}'.format(self.current_page.page_id))
+        pub.sendMessage('save_{}'.format(self.current_page.page_id))
 
         self.changed = False
         msg = 'Last saved at {}'.format(time.strftime('%H:%M:%S',
@@ -231,10 +225,10 @@ class Boomslang(wx.Frame):
         """
         Event handler that builds and shows an about box
         """
-        info = wx.AboutDialogInfo()
+        info = wx.adv.AboutDialogInfo()
         info.Name = "About Boomslang"
         info.Version = "0.1 Beta"
-        info.Copyright = "(C) 2017 Mike Driscoll"
+        info.Copyright = "(C) 2017-2019 Mike Driscoll"
         info.Description = wordwrap(
             "Boomslang is a Python-based XML editor ",
             350, wx.ClientDC(self.panel))
@@ -244,20 +238,20 @@ class Boomslang(wx.Frame):
         info.License = wordwrap("wxWindows Library Licence", 500,
                                 wx.ClientDC(self.panel))
         # Show the wx.AboutBox
-        wx.AboutBox(info)
+        wx.adv.AboutBox(info)
 
     def on_add_node(self, event):
         """
         Event handler that is fired when an XML node is added to the
         selected node
         """
-        Publisher.sendMessage('add_node')
+        pub.sendMessage('add_node_{}'.format(self.current_page.page_id))
 
     def on_remove_node(self, event):
         """
         Event handler that is fired when an XML node is removed
         """
-        Publisher.sendMessage('remove_node')
+        pub.sendMessage('remove_node_{}'.format(self.current_page.page_id))
 
     def on_open(self, event):
         """
