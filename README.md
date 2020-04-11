@@ -7,6 +7,7 @@ This project requires the following:
  - Python 3.5+
  - [wxPython 4+](https://pypi.python.org/pypi/wxPython/4.0.0a3)
  - [lxml](https://pypi.python.org/pypi/lxml/)
+ - [PyPubSub](https://pypubsub.readthedocs.io/en/v4.0.3/)
  
 This project has been tested on Windows 7, Mac OSX Sierra, and Xubuntu 16.04
 
