@@ -83,24 +83,24 @@ class Boomslang(wx.Frame):
 
         # add menu items to the file menu
         open_menu_item = file_menu.Append(
-            wx.NewId(), 'Open', '')
+            wx.ID_ANY, 'Open', '')
         self.Bind(wx.EVT_MENU, self.on_open, open_menu_item)
 
         sub_menu = self.create_recent_items()
-        file_menu.Append(wx.NewId(), 'Recent', sub_menu)
+        file_menu.AppendSubMenu(sub_menu, 'Recent', 'Recent files that have been opened')
 
         save_menu_item = file_menu.Append(
-            wx.NewId(), 'Save', '')
+            wx.ID_ANY, 'Save', '')
         self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
 
         exit_menu_item = file_menu.Append(
-            wx.NewId(), 'Quit', '')
+            wx.ID_ANY, 'Quit', '')
         self.Bind(wx.EVT_MENU, self.on_exit, exit_menu_item)
         menu_bar.Append(file_menu, "&File")
 
         # add menu items to the help menu
         about_menu_item = help_menu.Append(
-            wx.NewId(), 'About')
+            wx.ID_ANY, 'About')
         self.Bind(wx.EVT_MENU, self.on_about_box, about_menu_item)
         menu_bar.Append(help_menu, '&Help')
 
@@ -179,7 +179,7 @@ class Boomslang(wx.Frame):
             try:
                 with open(self.recent_files_path) as fobj:
                     for line in fobj:
-                        menu_id = wx.NewId()
+                        menu_id = wx.ID_ANY
                         submenu.Append(menu_id, line)
                         self.recent_dict[menu_id] = line.strip()
                         self.Bind(wx.EVT_MENU,
