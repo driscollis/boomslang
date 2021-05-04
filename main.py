@@ -329,7 +329,7 @@ class Boomslang(wx.Frame):
         Event handler that is called when a recent file is selected
         for opening
         """
-        self.open_xml_file(self.recent_dict[event.GetId()])
+        self.open_xml_file(self.recent_dict[event.GetInt()])
 
     def on_save(self, event):
         """
