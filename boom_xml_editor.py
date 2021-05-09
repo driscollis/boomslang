@@ -70,12 +70,12 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         tag_txt = wx.TextCtrl(self, value=object_tag, size=lbl_size)
         single_node_sizer.Add(tag_txt, 0, wx.ALL, 5)
         tag_txt.Bind(wx.EVT_TEXT, partial(
-            self.on_text_change, xml_obj=xml_obj))
+            self.on_tag_change, xml_obj=xml_obj))
         self.widgets.append(tag_txt)
 
         value_txt = wx.TextCtrl(self, value=object_text, style=wx.TE_MULTILINE)
         value_txt.Bind(wx.EVT_TEXT, partial(
-            self.on_text_change, xml_obj=xml_obj))
+            self.on_value_change, xml_obj=xml_obj))
         single_node_sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
         self.widgets.append(value_txt)
 
@@ -85,7 +85,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.widgets.append(add_node_btn)
 
         self.main_sizer.Add(single_node_sizer, 0, wx.EXPAND, 5)
-
+    
     def clear(self):
         """
         Clears the widgets from the panel in preparation for an update
@@ -106,18 +106,28 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.Layout()
 
 
-
-    def on_text_change(self, event, xml_obj):
+    def on_tag_change(self, event, xml_obj):
         """
-        An event handler that is called when the text changes in the text
+        An event handler that is called when the tag text changes in the text
         control. This will update the passed in xml object to something
         new
         """
-        # BUG: TODO: This method assumed that the event is updating text, rather than tag on an xml object. Silly.
+        #TODO: Figure out how this method can be combined with 'on_value_change'
+        xml_obj.tag = event.GetString()
+        pub.sendMessage('on_change_{}'.format(self.page_id),
+                        event=None)
+    
+    def on_value_change(self, event, xml_obj):
+        """
+        An event handler that is called when the value text changes in the text
+        control. This will update the passed in xml object to something
+        new
+        """
+        #TODO: Figure out how this method can be combined with 'on_tag_change'
         xml_obj.text = event.GetString()
         pub.sendMessage('on_change_{}'.format(self.page_id),
                         event=None)
-
+    
     def on_add_node(self, event):
         """
         Event handler that adds an XML node using pubsub
