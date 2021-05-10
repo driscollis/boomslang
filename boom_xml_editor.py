@@ -25,6 +25,8 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
     def update_ui(self, xml_obj):
         """
         Update the panel's user interface based on the data
+        TODO: WHEN ADDING A NODE, THE DISPLAY DOESN'T UPDATE.
+        
         """
         self.label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.clear()
@@ -39,7 +41,7 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.widgets.extend([tag_lbl, value_lbl])
         
         lbl_size = wx.Size(75, 25)
-        self.add_single_tag_elements(xml_obj, lbl_size)
+        self.add_single_tag_elements(xml_obj, lbl_size, True)
         
         xml_children = xml_obj.getchildren()
         
@@ -50,41 +52,56 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
             self.widgets.append(child_lbl)
             
             for child in xml_children:
-                self.add_single_tag_elements(child, lbl_size)
-
+                self.add_single_tag_elements(child, lbl_size, False)
+                
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
-    def add_single_tag_elements(self, xml_obj, lbl_size):
+    def add_single_tag_elements(self, xml_obj, lbl_size, add_button:bool):
         """
         Adds the single tag elements to the panel
 
         This function is only called when there should be just one
         tag / value
         """
-        # TODO: The update process for some elements isn't working as expected - especially xml tags. Each tag and text in here should have its own ID and be able to have 'update' called on it.
+        
+        single_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        tag_txt, value_txt, add_node_btn = self.create_xml_node_elements(xml_obj, lbl_size)
+        
+        single_node_sizer.Add(tag_txt, 0, wx.ALL, 5)
+        single_node_sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+        if add_button:
+            single_node_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
+        else:
+            self.widgets.remove(add_node_btn)
+            add_node_btn.Destroy()
+            del add_node_btn
+        
+        self.main_sizer.Add(single_node_sizer, 0, wx.EXPAND, 5)
+
+    def create_xml_node_elements(self, xml_obj, lbl_size):
+        """
+        Creates the elements for a single xml node, and returns them for separate adding to sizers etc.
+        """
         object_tag = xml_obj.tag if xml_obj.tag else ""
         object_text = xml_obj.text if xml_obj.text else ""
         
-        single_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
         tag_txt = wx.TextCtrl(self, value=object_tag, size=lbl_size)
-        single_node_sizer.Add(tag_txt, 0, wx.ALL, 5)
         tag_txt.Bind(wx.EVT_TEXT, partial(
             self.on_tag_change, xml_obj=xml_obj))
         self.widgets.append(tag_txt)
-
+        
         value_txt = wx.TextCtrl(self, value=object_text, style=wx.TE_MULTILINE)
         value_txt.Bind(wx.EVT_TEXT, partial(
             self.on_value_change, xml_obj=xml_obj))
-        single_node_sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
         self.widgets.append(value_txt)
-
+        
         add_node_btn = wx.Button(self, label='Add Node')
         add_node_btn.Bind(wx.EVT_BUTTON, self.on_add_node)
-        single_node_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
         self.widgets.append(add_node_btn)
-
-        self.main_sizer.Add(single_node_sizer, 0, wx.EXPAND, 5)
+        
+        return tag_txt, value_txt, add_node_btn
     
     def clear(self):
         """
