@@ -4,12 +4,12 @@ A simple XML editor created using Python and wxPython.
 
 This project requires the following:
 
- - Python 3.5+
- - [wxPython 4+](https://pypi.python.org/pypi/wxPython/4.0.0a3)
+ - Python 3.5+ but has been tested on Python 3.12 as well
+ - [wxPython 4+](https://pypi.python.org/pypi/wxPython/) - Updated to work with wxPython 4.2.3
  - [lxml](https://pypi.python.org/pypi/lxml/)
  - [PyPubSub](https://pypubsub.readthedocs.io/en/v4.0.3/)
  
-This project has been tested on Windows 7, Mac OSX Sierra, and Xubuntu 16.04
+This project has been tested on Windows 7 and 10, Mac OSX Sierra, and Xubuntu 16.04
 
 # Roadmap
 
