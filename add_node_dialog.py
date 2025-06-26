@@ -19,19 +19,15 @@ class NodeDialog(EditDialog):
         tells the UI to update to display the new element
         before destroying the dialog
         """
-        element = ET.SubElement(
-            self.xml_obj, self.value_one.GetValue())
+        element = ET.SubElement(self.xml_obj, self.value_one.GetValue())
         element.text = self.value_two.GetValue()
-        pub.sendMessage('tree_update_{}'.format(self.page_id),
-                        xml_obj=element)
-        pub.sendMessage('on_change_{}'.format(self.page_id),
-                        event=None)
+        pub.sendMessage("tree_update_{}".format(self.page_id), xml_obj=element)
+        pub.sendMessage("on_change_{}".format(self.page_id), event=None)
         self.Close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = wx.App(False)
-    dlg = NodeDialog('', title='Test',
-                     label_one='Element',
-                     label_two='Value')
+    dlg = NodeDialog("", title="Test", label_one="Element", label_two="Value")
     dlg.Destroy()
     app.MainLoop()

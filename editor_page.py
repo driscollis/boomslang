@@ -10,6 +10,7 @@ from boom_tree import BoomTreePanel
 from boom_xml_editor import XmlEditorPanel
 from pubsub import pub
 
+
 class NewPage(wx.Panel):
     """
     Create a new page for each opened XML document. This is the
@@ -25,26 +26,25 @@ class NewPage(wx.Panel):
         self.current_file = xml_path
         self.title = os.path.basename(xml_path)
 
-        self.app_location = os.path.dirname(os.path.abspath( sys.argv[0] ))
+        self.app_location = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-        self.tmp_location = os.path.join(self.app_location, 'drafts')
+        self.tmp_location = os.path.join(self.app_location, "drafts")
 
-        pub.subscribe(self.save, 'save_{}'.format(self.page_id))
-        pub.subscribe(self.auto_save, 'on_change_{}'.format(self.page_id))
+        pub.subscribe(self.save, "save_{}".format(self.page_id))
+        pub.subscribe(self.auto_save, "on_change_{}".format(self.page_id))
 
         self.parse_xml(xml_path)
 
-        current_time = time.strftime('%Y-%m-%d.%H.%M.%S', time.localtime())
+        current_time = time.strftime("%Y-%m-%d.%H.%M.%S", time.localtime())
         self.full_tmp_path = os.path.join(
-            self.tmp_location,
-            current_time + '-' + os.path.basename(xml_path))
+            self.tmp_location, current_time + "-" + os.path.basename(xml_path)
+        )
 
         if not os.path.exists(self.tmp_location):
             try:
                 os.makedirs(self.tmp_location)
             except IOError:
-                raise IOError('Unable to create file at {}'.format(
-                    self.tmp_location))
+                raise IOError("Unable to create file at {}".format(self.tmp_location))
 
         if self.xml_root is not None:
             self.create_editor()
@@ -60,15 +60,14 @@ class NewPage(wx.Panel):
 
         xml_editor_notebook = wx.Notebook(splitter)
         xml_editor_panel = XmlEditorPanel(xml_editor_notebook, self.page_id)
-        xml_editor_notebook.AddPage(xml_editor_panel, 'Nodes')
+        xml_editor_notebook.AddPage(xml_editor_panel, "Nodes")
 
-        attribute_panel = AttributeEditorPanel(
-            xml_editor_notebook, self.page_id)
-        xml_editor_notebook.AddPage(attribute_panel, 'Attributes')
+        attribute_panel = AttributeEditorPanel(xml_editor_notebook, self.page_id)
+        xml_editor_notebook.AddPage(attribute_panel, "Attributes")
 
         splitter.SplitVertically(tree_panel, xml_editor_notebook)
         splitter.SetMinimumPaneSize(int(self.size[0] / 2))
-        page_sizer.Add(splitter, 1, wx.ALL|wx.EXPAND, 5)
+        page_sizer.Add(splitter, 1, wx.ALL | wx.EXPAND, 5)
 
         self.SetSizer(page_sizer)
         self.Layout()
@@ -81,7 +80,7 @@ class NewPage(wx.Panel):
         current version of the XML to disk in a temporary location
         """
         self.xml_tree.write(self.full_tmp_path)
-        pub.sendMessage('on_change_status', save_path=self.full_tmp_path)
+        pub.sendMessage("on_change_status", save_path=self.full_tmp_path)
 
     def parse_xml(self, xml_path):
         """
@@ -91,10 +90,10 @@ class NewPage(wx.Panel):
         try:
             self.xml_tree = ET.parse(xml_path)
         except IOError:
-            print('Bad file')
+            print("Bad file")
             return
         except Exception as e:
-            print('Really bad error')
+            print("Really bad error")
             print(e)
             return
 
@@ -110,8 +109,8 @@ class NewPage(wx.Panel):
             path = location
 
         if path:
-            if '.xml' not in path:
-                path += '.xml'
+            if ".xml" not in path:
+                path += ".xml"
 
             # Save the xml
             self.xml_tree.write(path)
@@ -128,4 +127,4 @@ class NewPage(wx.Panel):
             try:
                 os.remove(self.full_tmp_path)
             except IOError:
-                print('Unable to delete file: {}'.format(self.full_tmp_path))
+                print("Unable to delete file: {}".format(self.full_tmp_path))

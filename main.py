@@ -15,14 +15,12 @@ from wx.lib.wordwrap import wordwrap
 
 
 class Boomslang(wx.Frame):
-
     def __init__(self):
         self.size = (800, 600)
-        wx.Frame.__init__(self, parent=None, title='Boomslang XML',
-                          size=(800, 600))
+        wx.Frame.__init__(self, parent=None, title="Boomslang XML", size=(800, 600))
 
-        self.full_tmp_path = ''
-        self.full_saved_path = ''
+        self.full_tmp_path = ""
+        self.full_saved_path = ""
         self.changed = False
         self.notebook = None
         self.opened_files = []
@@ -30,13 +28,12 @@ class Boomslang(wx.Frame):
         self.current_page = None
         self.today = datetime.now()
 
-        self.current_directory = os.path.expanduser('~')
-        self.app_location = os.path.dirname(os.path.abspath( sys.argv[0] ))
-        self.recent_files_path = os.path.join(
-            self.app_location, 'recent_files.txt')
+        self.current_directory = os.path.expanduser("~")
+        self.app_location = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.recent_files_path = os.path.join(self.app_location, "recent_files.txt")
 
-        pub.subscribe(self.save, 'save')
-        pub.subscribe(self.auto_save_status, 'on_change_status')
+        pub.subscribe(self.save, "save")
+        pub.subscribe(self.auto_save_status, "on_change_status")
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.panel = wx.Panel(self)
@@ -54,21 +51,20 @@ class Boomslang(wx.Frame):
         an XML file
         """
         if not self.notebook:
-            self.notebook = fnb.FlatNotebook(
-                self.panel)
-            self.main_sizer.Add(self.notebook, 1, wx.ALL|wx.EXPAND, 5)
+            self.notebook = fnb.FlatNotebook(self.panel)
+            self.main_sizer.Add(self.notebook, 1, wx.ALL | wx.EXPAND, 5)
             style = self.notebook.GetAGWWindowStyleFlag()
             style |= fnb.FNB_X_ON_TAB
             self.notebook.SetAGWWindowStyleFlag(style)
-            self.notebook.Bind(
-                fnb.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.on_page_closing)
+            self.notebook.Bind(fnb.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.on_page_closing)
 
         if xml_path not in self.opened_files:
-            self.current_page = NewPage(self.notebook, xml_path, self.size,
-                                        self.opened_files)
-            self.notebook.AddPage(self.current_page,
-                                  os.path.basename(xml_path),
-                                  select=True)
+            self.current_page = NewPage(
+                self.notebook, xml_path, self.size, self.opened_files
+            )
+            self.notebook.AddPage(
+                self.current_page, os.path.basename(xml_path), select=True
+            )
             self.last_opened_file = xml_path
 
             self.opened_files.append(self.last_opened_file)
@@ -85,91 +81,86 @@ class Boomslang(wx.Frame):
         help_menu = wx.Menu()
 
         # add menu items to the file menu
-        open_menu_item = file_menu.Append(
-            wx.NewIdRef(), 'Open', '')
+        open_menu_item = file_menu.Append(wx.NewIdRef(), "Open", "")
         self.Bind(wx.EVT_MENU, self.on_open, open_menu_item)
 
         sub_menu = self.create_recent_items()
-        file_menu.Append(wx.NewIdRef(), 'Recent', sub_menu)
+        file_menu.Append(wx.NewIdRef(), "Recent", sub_menu)
 
-        save_menu_item = file_menu.Append(
-            wx.NewIdRef(), 'Save', '')
+        save_menu_item = file_menu.Append(wx.NewIdRef(), "Save", "")
         self.Bind(wx.EVT_MENU, self.on_save, save_menu_item)
 
-        exit_menu_item = file_menu.Append(
-            wx.NewIdRef(), 'Quit', '')
+        exit_menu_item = file_menu.Append(wx.NewIdRef(), "Quit", "")
         self.Bind(wx.EVT_MENU, self.on_exit, exit_menu_item)
         menu_bar.Append(file_menu, "&File")
 
         # add menu items to the help menu
-        about_menu_item = help_menu.Append(
-            wx.NewIdRef(), 'About')
+        about_menu_item = help_menu.Append(wx.NewIdRef(), "About")
         self.Bind(wx.EVT_MENU, self.on_about_box, about_menu_item)
-        menu_bar.Append(help_menu, '&Help')
+        menu_bar.Append(help_menu, "&Help")
 
         self.SetMenuBar(menu_bar)
 
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         # Create toolbar
         self.toolbar = self.CreateToolBar()
-        self.toolbar.SetToolBitmapSize((16,16))
+        self.toolbar.SetToolBitmapSize((16, 16))
 
-        open_ico = wx.ArtProvider.GetBitmap(
-            wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16,16))
+        open_ico = wx.ArtProvider.GetBitmap(wx.ART_FILE_OPEN, wx.ART_TOOLBAR, (16, 16))
         open_tool = self.toolbar.AddTool(
-            wx.ID_ANY, "Open", open_ico, "Open an XML File")
+            wx.ID_ANY, "Open", open_ico, "Open an XML File"
+        )
         self.Bind(wx.EVT_MENU, self.on_open, open_tool)
 
-        save_ico = wx.ArtProvider.GetBitmap(
-            wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16,16))
-        save_tool = self.toolbar.AddTool(
-            wx.ID_ANY, "Save", save_ico, "Saves the XML")
+        save_ico = wx.ArtProvider.GetBitmap(wx.ART_FILE_SAVE, wx.ART_TOOLBAR, (16, 16))
+        save_tool = self.toolbar.AddTool(wx.ID_ANY, "Save", save_ico, "Saves the XML")
         self.Bind(wx.EVT_MENU, self.on_save, save_tool)
 
         self.toolbar.AddSeparator()
 
         # Create the add node toolbar button
-        add_ico = wx.ArtProvider.GetBitmap(
-            wx.ART_PLUS, wx.ART_TOOLBAR, (16,16))
+        add_ico = wx.ArtProvider.GetBitmap(wx.ART_PLUS, wx.ART_TOOLBAR, (16, 16))
         add_tool = self.toolbar.AddTool(
-            wx.ID_ANY, "Add Node", add_ico, "Adds an XML Node")
+            wx.ID_ANY, "Add Node", add_ico, "Adds an XML Node"
+        )
         self.Bind(wx.EVT_MENU, self.on_add_node, add_tool)
 
         # Create the delete node button
-        remove_ico = wx.ArtProvider.GetBitmap(
-            wx.ART_MINUS, wx.ART_TOOLBAR, (16,16))
+        remove_ico = wx.ArtProvider.GetBitmap(wx.ART_MINUS, wx.ART_TOOLBAR, (16, 16))
         remove_node_tool = self.toolbar.AddTool(
-            wx.ID_ANY, "Remove Node", remove_ico, "Removes the XML Node")
+            wx.ID_ANY, "Remove Node", remove_ico, "Removes the XML Node"
+        )
         self.Bind(wx.EVT_MENU, self.on_remove_node, remove_node_tool)
 
         # Create a preview XML button
         preview_ico = wx.ArtProvider.GetBitmap(
-            wx.ART_REPORT_VIEW, wx.ART_TOOLBAR, (16,16))
+            wx.ART_REPORT_VIEW, wx.ART_TOOLBAR, (16, 16)
+        )
         preview_tool = self.toolbar.AddTool(
-            wx.ID_ANY, 'Preview XML', preview_ico, 'Previews XML')
+            wx.ID_ANY, "Preview XML", preview_ico, "Previews XML"
+        )
         self.Bind(wx.EVT_MENU, self.on_preview_xml, preview_tool)
 
         self.toolbar.Realize()
 
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         # Create an accelerator table
-        accel_tbl = wx.AcceleratorTable([(wx.ACCEL_CTRL,  ord('O'),
-                                          open_menu_item.GetId() ),
-                                         (wx.ACCEL_CTRL, ord('S'),
-                                          save_menu_item.GetId() ),
-                                         (wx.ACCEL_CTRL, ord('A'),
-                                          add_tool.GetId() ),
-                                         (wx.ACCEL_CTRL, ord('X'),
-                                          remove_node_tool.GetId())
-                                         ])
+        accel_tbl = wx.AcceleratorTable(
+            [
+                (wx.ACCEL_CTRL, ord("O"), open_menu_item.GetId()),
+                (wx.ACCEL_CTRL, ord("S"), save_menu_item.GetId()),
+                (wx.ACCEL_CTRL, ord("A"), add_tool.GetId()),
+                (wx.ACCEL_CTRL, ord("X"), remove_node_tool.GetId()),
+            ]
+        )
 
         self.SetAcceleratorTable(accel_tbl)
 
-        #-----------------------------------------------------------------------
+        # -----------------------------------------------------------------------
         # Create status bar
         self.status_bar = self.CreateStatusBar(1)
 
-        msg = f'Welcome to Boomslang XML (c) Michael Driscoll - 2017-{self.today.year}'
+        msg = f"Welcome to Boomslang XML (c) Michael Driscoll - 2017-{self.today.year}"
         self.status_bar.SetStatusText(msg)
 
     def create_recent_items(self):
@@ -185,19 +176,17 @@ class Boomslang(wx.Frame):
                         menu_id = wx.NewIdRef()
                         submenu.Append(menu_id, line)
                         self.recent_dict[menu_id] = line.strip()
-                        self.Bind(wx.EVT_MENU,
-                                  self.on_open_recent_file,
-                                  id=menu_id)
+                        self.Bind(wx.EVT_MENU, self.on_open_recent_file, id=menu_id)
                 return submenu
-            except:
+            except IOError:
                 pass
 
     def auto_save_status(self, save_path):
         """
         This function is called via PubSub to update the frame's status
         """
-        print(f'Autosaving to {save_path} @ {time.ctime()}')
-        msg = f'Autosaved at {self.today:%H:%M:%}'
+        print(f"Autosaving to {save_path} @ {time.ctime()}")
+        msg = f"Autosaved at {self.today:%H:%M:%}"
         self.status_bar.SetStatusText(msg)
 
         self.changed = True
@@ -216,10 +205,10 @@ class Boomslang(wx.Frame):
             utils.warn_nothing_to_save()
             return
 
-        pub.sendMessage(f'save_{self.current_page.page_id}')
+        pub.sendMessage(f"save_{self.current_page.page_id}")
 
         self.changed = False
-        msg = f'Last saved at {self.today:%H:%M:%S}'
+        msg = f"Last saved at {self.today:%H:%M:%S}"
         self.status_bar.SetStatusText(msg)
 
     def on_about_box(self, event):
@@ -231,13 +220,16 @@ class Boomslang(wx.Frame):
         info.Version = "0.1 Beta"
         info.Copyright = f"(C) 2017-{self.today.year} Mike Driscoll"
         info.Description = wordwrap(
-            "Boomslang is a Python-based XML editor ",
-            350, wx.ClientDC(self.panel))
-        info.WebSite = ("https://github.com/driscollis/boomslang",
-                        "Boomslang on Github")
+            "Boomslang is a Python-based XML editor ", 350, wx.ClientDC(self.panel)
+        )
+        info.WebSite = (
+            "https://github.com/driscollis/boomslang",
+            "Boomslang on Github",
+        )
         info.Developers = ["Mike Driscoll"]
-        info.License = wordwrap("wxWindows Library Licence", 500,
-                                wx.ClientDC(self.panel))
+        info.License = wordwrap(
+            "wxWindows Library Licence", 500, wx.ClientDC(self.panel)
+        )
         # Show the wx.AboutBox
         wx.adv.AboutBox(info)
 
@@ -246,13 +238,13 @@ class Boomslang(wx.Frame):
         Event handler that is fired when an XML node is added to the
         selected node
         """
-        pub.sendMessage(f'add_node_{self.current_page.page_id}')
+        pub.sendMessage(f"add_node_{self.current_page.page_id}")
 
     def on_remove_node(self, event):
         """
         Event handler that is fired when an XML node is removed
         """
-        pub.sendMessage(f'remove_node_{self.current_page.page_id}')
+        pub.sendMessage(f"remove_node_{self.current_page.page_id}")
 
     def on_open(self, event):
         """
@@ -281,8 +273,7 @@ class Boomslang(wx.Frame):
         in memory
         """
         if self.last_opened_file:
-            previewer = XmlViewer(
-                xml_file=self.last_opened_file)
+            previewer = XmlViewer(xml_file=self.last_opened_file)
             previewer.ShowModal()
             previewer.Destroy()
 
@@ -294,17 +285,17 @@ class Boomslang(wx.Frame):
         try:
             with open(self.recent_files_path) as fobj:
                 lines = fobj.readlines()
-        except:
+        except IOError:
             pass
 
         lines = [line.strip() for line in lines]
 
         if xml_path not in lines:
             try:
-                with open(self.recent_files_path, 'a') as fobj:
+                with open(self.recent_files_path, "a") as fobj:
                     fobj.write(xml_path)
-                    fobj.write('\n')
-            except:
+                    fobj.write("\n")
+            except IOError:
                 pass
         elif xml_path != lines[0]:
             for index, item in enumerate(lines):
@@ -318,11 +309,11 @@ class Boomslang(wx.Frame):
 
             # rewrite the file
             try:
-                with open(self.recent_files_path, 'w') as fobj:
+                with open(self.recent_files_path, "w") as fobj:
                     for line in lines:
                         fobj.write(line)
-                        fobj.write('\n')
-            except:
+                        fobj.write("\n")
+            except IOError:
                 pass
 
     def on_open_recent_file(self, event):
@@ -344,10 +335,11 @@ class Boomslang(wx.Frame):
         """
         self.Destroy()
 
+
 # ------------------------------------------------------------------------------
 # Run the program!
-if __name__ == '__main__':
-    xml_path = 'books.xml'
+if __name__ == "__main__":
+    xml_path = "books.xml"
     app = wx.App(redirect=False)
     frame = Boomslang()
     app.MainLoop()

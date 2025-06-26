@@ -1,5 +1,6 @@
 import wx
 
+
 class EditDialog(wx.Dialog):
     """
     Super class to derive attribute and element edit
@@ -28,20 +29,20 @@ class EditDialog(wx.Dialog):
         flex_sizer.Add(value_lbl, 0, wx.ALL, 5)
 
         self.value_one = wx.TextCtrl(self)
-        flex_sizer.Add(self.value_one, 1, wx.ALL|wx.EXPAND, 5)
+        flex_sizer.Add(self.value_one, 1, wx.ALL | wx.EXPAND, 5)
         self.value_two = wx.TextCtrl(self, style=wx.TE_PROCESS_ENTER)
         self.value_two.Bind(wx.EVT_KEY_DOWN, self.on_enter)
-        flex_sizer.Add(self.value_two, 1, wx.ALL|wx.EXPAND, 5)
+        flex_sizer.Add(self.value_two, 1, wx.ALL | wx.EXPAND, 5)
         flex_sizer.AddGrowableCol(1, 1)
         flex_sizer.AddGrowableCol(0, 1)
 
-        save_btn = wx.Button(self, label='Save')
+        save_btn = wx.Button(self, label="Save")
         save_btn.Bind(wx.EVT_BUTTON, self.on_save)
-        btn_sizer.Add(save_btn, 0, wx.ALL|wx.CENTER, 5)
+        btn_sizer.Add(save_btn, 0, wx.ALL | wx.CENTER, 5)
 
-        cancel_btn = wx.Button(self, label='Cancel')
+        cancel_btn = wx.Button(self, label="Cancel")
         cancel_btn.Bind(wx.EVT_BUTTON, self.on_cancel)
-        btn_sizer.Add(cancel_btn, 0, wx.ALL|wx.CENTER, 5)
+        btn_sizer.Add(cancel_btn, 0, wx.ALL | wx.CENTER, 5)
 
         main_sizer.Add(flex_sizer, 0, wx.EXPAND)
         main_sizer.Add(btn_sizer, 0, wx.CENTER)

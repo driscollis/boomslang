@@ -5,7 +5,7 @@ from functools import partial
 from pubsub import pub
 
 
-class State():
+class State:
     """
     Class for keeping track of the state of the key portion
     of the attribute
@@ -29,7 +29,7 @@ class AttributeEditorPanel(wx.Panel):
         self.xml_obj = None
         self.widgets = []
 
-        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+        pub.subscribe(self.update_ui, "ui_updater_{}".format(self.page_id))
 
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(self.main_sizer)
@@ -45,10 +45,10 @@ class AttributeEditorPanel(wx.Panel):
         self.xml_obj = xml_obj
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
-        attr_lbl = wx.StaticText(self, label='Attribute')
-        value_lbl = wx.StaticText(self, label='Value')
+        attr_lbl = wx.StaticText(self, label="Attribute")
+        value_lbl = wx.StaticText(self, label="Value")
         sizer.Add(attr_lbl, 0, wx.ALL, 5)
-        sizer.Add((133,0))
+        sizer.Add((133, 0))
         sizer.Add(value_lbl, 0, wx.ALL, 5)
         self.widgets.extend([attr_lbl, value_lbl])
 
@@ -57,31 +57,25 @@ class AttributeEditorPanel(wx.Panel):
         for key in xml_obj.attrib:
             _ = wx.BoxSizer(wx.HORIZONTAL)
             attr_name = wx.TextCtrl(self, value=key)
-            _.Add(attr_name, 1, wx.ALL|wx.EXPAND, 5)
+            _.Add(attr_name, 1, wx.ALL | wx.EXPAND, 5)
             self.widgets.append(attr_name)
 
             val = str(xml_obj.attrib[key])
             attr_val = wx.TextCtrl(self, value=val)
-            _.Add(attr_val, 1, wx.ALL|wx.EXPAND, 5)
+            _.Add(attr_val, 1, wx.ALL | wx.EXPAND, 5)
 
             # keep track of the attribute text control's state
             attr_state = State(key, attr_val)
 
-            attr_name.Bind(
-                wx.EVT_TEXT, partial(
-                    self.on_key_change, state=attr_state))
-            attr_val.Bind(
-                wx.EVT_TEXT, partial(
-                    self.on_val_change,
-                    attr=attr_name
-                ))
+            attr_name.Bind(wx.EVT_TEXT, partial(self.on_key_change, state=attr_state))
+            attr_val.Bind(wx.EVT_TEXT, partial(self.on_val_change, attr=attr_name))
 
             self.widgets.append(attr_val)
             self.main_sizer.Add(_, 0, wx.EXPAND)
         else:
-            add_attr_btn = wx.Button(self, label='Add Attribute')
+            add_attr_btn = wx.Button(self, label="Add Attribute")
             add_attr_btn.Bind(wx.EVT_BUTTON, self.on_add_attr)
-            self.main_sizer.Add(add_attr_btn, 0, wx.ALL|wx.CENTER, 5)
+            self.main_sizer.Add(add_attr_btn, 0, wx.ALL | wx.CENTER, 5)
             self.widgets.append(add_attr_btn)
 
         self.Layout()
@@ -93,9 +87,9 @@ class AttributeEditorPanel(wx.Panel):
         dlg = AttributeDialog(
             self.xml_obj,
             page_id=self.page_id,
-            title = 'Add Attribute',
-            label_one = 'Attribute',
-            label_two = 'Value'
+            title="Add Attribute",
+            label_one="Attribute",
+            label_two="Value",
         )
         dlg.Destroy()
 
@@ -130,8 +124,7 @@ class AttributeEditorPanel(wx.Panel):
             self.xml_obj.attrib[new_key] = state.val_widget.GetValue()
             state.previous_key = state.current_key
             state.current_key = new_key
-            pub.sendMessage('on_change_{}'.format(self.page_id),
-                            event=None)
+            pub.sendMessage("on_change_{}".format(self.page_id), event=None)
 
     def on_val_change(self, event, attr):
         """
@@ -140,5 +133,4 @@ class AttributeEditorPanel(wx.Panel):
         """
         new_val = event.GetString()
         self.xml_obj.attrib[attr.GetValue()] = new_val
-        pub.sendMessage('on_change_{}'.format(self.page_id),
-                        event=None)
+        pub.sendMessage("on_change_{}".format(self.page_id), event=None)

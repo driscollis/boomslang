@@ -1,4 +1,3 @@
-import lxml.etree as ET
 import wx
 
 from add_node_dialog import NodeDialog
@@ -13,18 +12,17 @@ class XmlTree(wx.TreeCtrl):
 
     def __init__(self, parent, wx_id, pos, size, style):
         wx.TreeCtrl.__init__(self, parent, wx_id, pos, size, style)
-        self.expanded= {}
+        self.expanded = {}
         self.xml_root = parent.xml_root
         self.page_id = parent.page_id
-        pub.subscribe(self.update_tree,
-                      'tree_update_{}'.format(self.page_id))
+        pub.subscribe(self.update_tree, "tree_update_{}".format(self.page_id))
 
         root = self.AddRoot(self.xml_root.tag)
-        self.expanded[id(self.xml_root)] = ''
+        self.expanded[id(self.xml_root)] = ""
         self.SetItemData(root, self.xml_root)
-        wx.CallAfter(pub.sendMessage,
-                     'ui_updater_{}'.format(self.page_id),
-                     xml_obj=self.xml_root)
+        wx.CallAfter(
+            pub.sendMessage, "ui_updater_{}".format(self.page_id), xml_obj=self.xml_root
+        )
 
         if self.xml_root.getchildren():
             for top_level_item in self.xml_root.getchildren():
@@ -64,7 +62,7 @@ class XmlTree(wx.TreeCtrl):
                 if top_level_item.getchildren():
                     self.SetItemHasChildren(child)
 
-        self.expanded[id(xml_obj)] = ''
+        self.expanded[id(xml_obj)] = ""
 
     def on_tree_selection(self, event):
         """
@@ -75,8 +73,7 @@ class XmlTree(wx.TreeCtrl):
         """
         item = event.GetItem()
         xml_obj = self.GetItemData(item)
-        pub.sendMessage('ui_updater_{}'.format(self.page_id),
-                        xml_obj=xml_obj)
+        pub.sendMessage("ui_updater_{}".format(self.page_id), xml_obj=xml_obj)
 
     def update_tree(self, xml_obj):
         """
@@ -106,14 +103,12 @@ class BoomTreePanel(wx.Panel):
         self.copied_data = None
         self.page_id = page_id
 
-        pub.subscribe(self.add_node,
-                      'add_node_{}'.format(self.page_id))
-        pub.subscribe(self.remove_node,
-                      'remove_node_{}'.format(self.page_id))
+        pub.subscribe(self.add_node, "add_node_{}".format(self.page_id))
+        pub.subscribe(self.remove_node, "remove_node_{}".format(self.page_id))
 
         self.tree = XmlTree(
-            self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize,
-            wx.TR_HAS_BUTTONS)
+            self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TR_HAS_BUTTONS
+        )
         self.tree.Bind(wx.EVT_CONTEXT_MENU, self.on_context_menu)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -131,20 +126,18 @@ class BoomTreePanel(wx.Panel):
             self.copy_id = wx.NewId()
             self.paste_id = wx.NewId()
 
-            self.Bind(wx.EVT_MENU, self.on_add_remove_node,
-                      id=self.add_node_id)
-            self.Bind(wx.EVT_MENU, self.on_add_remove_node,
-                      id=self.remove_node_id)
+            self.Bind(wx.EVT_MENU, self.on_add_remove_node, id=self.add_node_id)
+            self.Bind(wx.EVT_MENU, self.on_add_remove_node, id=self.remove_node_id)
             self.Bind(wx.EVT_MENU, self.on_copy, id=self.copy_id)
             self.Bind(wx.EVT_MENU, self.on_paste, id=self.paste_id)
 
         # Build the context menu
         menu = wx.Menu()
-        copy_menu_item = menu.Append(self.copy_id, 'Copy')
-        paste_menu_item = menu.Append(self.paste_id, 'Paste')
+        menu.Append(self.copy_id, "Copy")
+        menu.Append(self.paste_id, "Paste")
         menu.AppendSeparator()
-        add_node_menu_item = menu.Append(self.add_node_id, 'Add Node')
-        remove_node_menu_item = menu.Append(self.remove_node_id, 'Remove Node')
+        menu.Append(self.add_node_id, "Add Node")
+        menu.Append(self.remove_node_id, "Remove Node")
 
         self.PopupMenu(menu)
         menu.Destroy()
@@ -175,10 +168,10 @@ class BoomTreePanel(wx.Panel):
             parent_xml_node = self.tree.GetItemData(node)
 
             parent_xml_node.append(self.copied_data)
-            pub.sendMessage('tree_update_{}'.format(self.page_id),
-                            xml_obj=self.copied_data)
-            pub.sendMessage('on_change_{}'.format(self.page_id),
-                            event=None)
+            pub.sendMessage(
+                "tree_update_{}".format(self.page_id), xml_obj=self.copied_data
+            )
+            pub.sendMessage("on_change_{}".format(self.page_id), event=None)
 
     def add_node(self):
         """
@@ -186,12 +179,13 @@ class BoomTreePanel(wx.Panel):
         """
         node = self.tree.GetSelection()
         data = self.tree.GetItemData(node)
-        dlg = NodeDialog(data,
-                         page_id=self.page_id,
-                         title = 'New Node',
-                         label_one = 'Element Tag',
-                         label_two = 'Element Value'
-                         )
+        dlg = NodeDialog(
+            data,
+            page_id=self.page_id,
+            title="New Node",
+            label_one="Element Tag",
+            label_two="Element Value",
+        )
         dlg.Destroy()
 
     def remove_node(self):
@@ -202,18 +196,17 @@ class BoomTreePanel(wx.Panel):
         xml_node = self.tree.GetItemData(node)
 
         if node:
-            msg = 'Are you sure you want to delete the {node} node'
+            msg = "Are you sure you want to delete the {node} node"
             dlg = wx.MessageDialog(
                 parent=None,
                 message=msg.format(node=xml_node.tag),
-                caption='Warning',
-                style=wx.YES_NO|wx.YES_DEFAULT|wx.ICON_EXCLAMATION
+                caption="Warning",
+                style=wx.YES_NO | wx.YES_DEFAULT | wx.ICON_EXCLAMATION,
             )
             if dlg.ShowModal() == wx.ID_YES:
                 parent = xml_node.getparent()
                 parent.remove(xml_node)
                 self.tree.DeleteChildren(node)
                 self.tree.Delete(node)
-                pub.sendMessage('on_change_{}'.format(self.page_id),
-                                event=None)
+                pub.sendMessage("on_change_{}".format(self.page_id), event=None)
             dlg.Destroy()

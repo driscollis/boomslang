@@ -12,14 +12,13 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
 
     def __init__(self, parent, page_id):
         """Constructor"""
-        scrolled.ScrolledPanel.__init__(
-            self, parent, style=wx.SUNKEN_BORDER)
+        scrolled.ScrolledPanel.__init__(self, parent, style=wx.SUNKEN_BORDER)
         self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.page_id = page_id
         self.widgets = []
         self.label_spacer = None
 
-        pub.subscribe(self.update_ui, 'ui_updater_{}'.format(self.page_id))
+        pub.subscribe(self.update_ui, "ui_updater_{}".format(self.page_id))
 
         self.SetSizer(self.main_sizer)
 
@@ -30,8 +29,8 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.clear()
 
-        tag_lbl = wx.StaticText(self, label='Tags')
-        value_lbl = wx.StaticText(self, label='Value')
+        tag_lbl = wx.StaticText(self, label="Tags")
+        value_lbl = wx.StaticText(self, label="Value")
         self.label_sizer.Add(tag_lbl, 0, wx.ALL, 5)
         self.label_sizer.Add((55, 0))
         self.label_sizer.Add(value_lbl, 0, wx.ALL, 5)
@@ -49,22 +48,22 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
                 sizer.Add(tag_txt, 0, wx.ALL, 5)
                 self.widgets.append(tag_txt)
 
-                text = child.text if child.text else ''
+                text = child.text if child.text else ""
 
                 value_txt = wx.TextCtrl(self, value=text)
                 value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
-                sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+                sizer.Add(value_txt, 1, wx.ALL | wx.EXPAND, 5)
                 self.widgets.append(value_txt)
 
                 self.main_sizer.Add(sizer, 0, wx.EXPAND)
             else:
-                if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
+                if getattr(xml_obj, "tag") and getattr(xml_obj, "text"):
                     if xml_obj.getchildren() == []:
                         self.add_single_tag_elements(xml_obj, lbl_size)
 
-                add_node_btn = wx.Button(self, label='Add Node')
+                add_node_btn = wx.Button(self, label="Add Node")
                 add_node_btn.Bind(wx.EVT_BUTTON, self.on_add_node)
-                self.main_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
+                self.main_sizer.Add(add_node_btn, 0, wx.ALL | wx.CENTER, 5)
                 self.widgets.append(add_node_btn)
 
             self.SetAutoLayout(1)
@@ -83,9 +82,8 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.widgets.append(tag_txt)
 
         value_txt = wx.TextCtrl(self, value=xml_obj.text)
-        value_txt.Bind(wx.EVT_TEXT, partial(
-            self.on_text_change, xml_obj=xml_obj))
-        sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+        value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=xml_obj))
+        sizer.Add(value_txt, 1, wx.ALL | wx.EXPAND, 5)
         self.widgets.append(value_txt)
 
         self.main_sizer.Add(sizer, 0, wx.EXPAND)
@@ -116,11 +114,10 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         new
         """
         xml_obj.text = event.GetString()
-        pub.sendMessage('on_change_{}'.format(self.page_id),
-                        event=None)
+        pub.sendMessage("on_change_{}".format(self.page_id), event=None)
 
     def on_add_node(self, event):
         """
         Event handler that adds an XML node using pubsub
         """
-        pub.sendMessage('add_node_{}'.format(self.page_id))
+        pub.sendMessage("add_node_{}".format(self.page_id))
