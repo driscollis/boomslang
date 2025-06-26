@@ -4,7 +4,6 @@ import wx.lib.scrolledpanel as scrolled
 from functools import partial
 from pubsub import pub
 
-
 class XmlEditorPanel(scrolled.ScrolledPanel):
     """
     The panel in the notebook that allows editing of XML element values
@@ -26,6 +25,8 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
     def update_ui(self, xml_obj):
         """
         Update the panel's user interface based on the data
+        TODO: WHEN ADDING A NODE, THE DISPLAY DOESN'T UPDATE.
+        
         """
         self.label_sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.clear()
@@ -35,61 +36,73 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.label_sizer.Add(tag_lbl, 0, wx.ALL, 5)
         self.label_sizer.Add((55, 0))
         self.label_sizer.Add(value_lbl, 0, wx.ALL, 5)
-        self.main_sizer.Add(self.label_sizer)
+        self.main_sizer.Add(self.label_sizer, 0, wx.EXPAND|wx.BOTTOM, 5)
 
         self.widgets.extend([tag_lbl, value_lbl])
+        
+        lbl_size = wx.Size(75, 25)
+        self.add_single_tag_elements(xml_obj, lbl_size, True)
+        
+        xml_children = xml_obj.getchildren()
+        
+        if xml_children:
+            child_lbl = wx.StaticText(self.main_sizer.GetContainingWindow(), label="Children:", size=lbl_size)
+            
+            self.main_sizer.Add(child_lbl, 0, wx.BOTTOM|wx.ALIGN_CENTRE, 5)
+            self.widgets.append(child_lbl)
+            
+            for child in xml_children:
+                self.add_single_tag_elements(child, lbl_size, False)
+                
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
 
-        if xml_obj is not None:
-            lbl_size = (75, 25)
-            for child in xml_obj.getchildren():
-                if child.getchildren():
-                    continue
-                sizer = wx.BoxSizer(wx.HORIZONTAL)
-                tag_txt = wx.StaticText(self, label=child.tag, size=lbl_size)
-                sizer.Add(tag_txt, 0, wx.ALL, 5)
-                self.widgets.append(tag_txt)
-
-                text = child.text if child.text else ''
-
-                value_txt = wx.TextCtrl(self, value=text)
-                value_txt.Bind(wx.EVT_TEXT, partial(self.on_text_change, xml_obj=child))
-                sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
-                self.widgets.append(value_txt)
-
-                self.main_sizer.Add(sizer, 0, wx.EXPAND)
-            else:
-                if getattr(xml_obj, 'tag') and getattr(xml_obj, 'text'):
-                    if xml_obj.getchildren() == []:
-                        self.add_single_tag_elements(xml_obj, lbl_size)
-
-                add_node_btn = wx.Button(self, label='Add Node')
-                add_node_btn.Bind(wx.EVT_BUTTON, self.on_add_node)
-                self.main_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
-                self.widgets.append(add_node_btn)
-
-            self.SetAutoLayout(1)
-            self.SetupScrolling()
-
-    def add_single_tag_elements(self, xml_obj, lbl_size):
+    def add_single_tag_elements(self, xml_obj, lbl_size, add_button:bool):
         """
         Adds the single tag elements to the panel
 
         This function is only called when there should be just one
         tag / value
         """
-        sizer = wx.BoxSizer(wx.HORIZONTAL)
-        tag_txt = wx.StaticText(self, label=xml_obj.tag, size=lbl_size)
-        sizer.Add(tag_txt, 0, wx.ALL, 5)
+        
+        single_node_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        tag_txt, value_txt, add_node_btn = self.create_xml_node_elements(xml_obj, lbl_size)
+        
+        single_node_sizer.Add(tag_txt, 0, wx.ALL, 5)
+        single_node_sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+        if add_button:
+            single_node_sizer.Add(add_node_btn, 0, wx.ALL|wx.CENTER, 5)
+        else:
+            self.widgets.remove(add_node_btn)
+            add_node_btn.Destroy()
+            del add_node_btn
+        
+        self.main_sizer.Add(single_node_sizer, 0, wx.EXPAND, 5)
+
+    def create_xml_node_elements(self, xml_obj, lbl_size):
+        """
+        Creates the elements for a single xml node, and returns them for separate adding to sizers etc.
+        """
+        object_tag = xml_obj.tag if xml_obj.tag else ""
+        object_text = xml_obj.text if xml_obj.text else ""
+        
+        tag_txt = wx.TextCtrl(self, value=object_tag, size=lbl_size)
+        tag_txt.Bind(wx.EVT_TEXT, partial(
+            self.on_tag_change, xml_obj=xml_obj))
         self.widgets.append(tag_txt)
-
-        value_txt = wx.TextCtrl(self, value=xml_obj.text)
+        
+        value_txt = wx.TextCtrl(self, value=object_text, style=wx.TE_MULTILINE)
         value_txt.Bind(wx.EVT_TEXT, partial(
-            self.on_text_change, xml_obj=xml_obj))
-        sizer.Add(value_txt, 1, wx.ALL|wx.EXPAND, 5)
+            self.on_value_change, xml_obj=xml_obj))
         self.widgets.append(value_txt)
-
-        self.main_sizer.Add(sizer, 0, wx.EXPAND)
-
+        
+        add_node_btn = wx.Button(self, label='Add Node')
+        add_node_btn.Bind(wx.EVT_BUTTON, self.on_add_node)
+        self.widgets.append(add_node_btn)
+        
+        return tag_txt, value_txt, add_node_btn
+    
     def clear(self):
         """
         Clears the widgets from the panel in preparation for an update
@@ -109,16 +122,29 @@ class XmlEditorPanel(scrolled.ScrolledPanel):
         self.widgets = []
         self.Layout()
 
-    def on_text_change(self, event, xml_obj):
+
+    def on_tag_change(self, event, xml_obj):
         """
-        An event handler that is called when the text changes in the text
+        An event handler that is called when the tag text changes in the text
         control. This will update the passed in xml object to something
         new
         """
+        #TODO: Figure out how this method can be combined with 'on_value_change'
+        xml_obj.tag = event.GetString()
+        pub.sendMessage('on_change_{}'.format(self.page_id),
+                        event=None)
+    
+    def on_value_change(self, event, xml_obj):
+        """
+        An event handler that is called when the value text changes in the text
+        control. This will update the passed in xml object to something
+        new
+        """
+        #TODO: Figure out how this method can be combined with 'on_tag_change'
         xml_obj.text = event.GetString()
         pub.sendMessage('on_change_{}'.format(self.page_id),
                         event=None)
-
+    
     def on_add_node(self, event):
         """
         Event handler that adds an XML node using pubsub
